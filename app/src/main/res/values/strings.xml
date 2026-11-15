@@ -1,0 +1,109 @@
+<resources>
+    <string name="app_name">My Little Planner</string>
+    <string name="btn_send_plan">Send Plan</string>
+    <string name="msg_plan_copied">Plan copied and ready for sharing! 📩✨</string>
+    <string name="share_plan_title">%1$s - My Little Planner for Today 🐱</string>
+    <string name="share_tasks_header">📌 Today\'s Tasks &amp; Goals:</string>
+    <string name="share_empty_tasks">🌸 No tasks scheduled for today, enjoying free time!</string>
+    <string name="share_footer">Sending you my plan! 💕✨</string>
+    <string name="share_chooser_title">Send plan via&#8230;</string>
+
+    <!-- Home Categories -->
+    <string name="cat_calendar_title">Schedule\nCalendar</string>
+    <string name="cat_calendar_sub">Plan your days</string>
+    <string name="cat_daily_plan_title">My Today\'s\nPlan</string>
+    <string name="cat_daily_plan_sub">Daily tasks</string>
+    <string name="cat_study_title">What to\nStudy?</string>
+    <string name="cat_study_sub">School &amp; homework</string>
+    <string name="cat_free_time_title">My Free\nTime</string>
+    <string name="cat_free_time_sub">Hobbies &amp; fun</string>
+    <string name="cat_pets_title">Pets Care\n </string>
+    <string name="cat_pets_sub">Cat, dog &amp; more</string>
+    <string name="cat_music_title">Music Corner\n </string>
+    <string name="cat_music_sub">Favorite songs</string>
+    <string name="btn_diary_title">SECRET DIARY . . . . .</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Welcome to My Little Planner! ✨</string>
+    <string name="onboarding_sub">Let\'s set up your profile and secret 4-digit PIN.</string>
+    <string name="label_your_name">Your Name</string>
+    <string name="label_secret_pin">Secret 4-digit PIN</string>
+    <string name="btn_start_planner">Start Planner ✨</string>
+
+    <!-- Calendar Screen -->
+    <string name="calendar_topbar">Schedule Calendar 📅</string>
+    <string name="tab_monthly_grid">Monthly Grid 🗓️</string>
+    <string name="tab_weekly_agenda">Weekly Agenda 📆</string>
+    <string name="btn_add_task">Add Task</string>
+    <string name="placeholder_task_title">Task name...</string>
+    <string name="empty_tasks_day">No tasks scheduled for this day ✨</string>
+
+    <!-- Daily Plan Screen -->
+    <string name="daily_plan_topbar">My Today\'s Plan 📝</string>
+    <string name="quick_templates_title">Quick Templates ⚡</string>
+    <string name="tmpl_clean_room">Clean Room 🧹</string>
+    <string name="tmpl_homework">Do Homework 📚</string>
+    <string name="tmpl_pack_bag">Pack Backpack 🎒</string>
+    <string name="tmpl_drink_water">Drink Water 💧</string>
+    <string name="stars_reward_text">Gold Stars Earned Today: </string>
+
+    <!-- Study Screen -->
+    <string name="study_topbar">School Timetable &amp; Tasks 📚</string>
+    <string name="tab_timetable">Timetable 🗓️</string>
+    <string name="tab_homework">Homework &amp; Exams 📝</string>
+
+    <!-- Free Time Screen -->
+    <string name="free_time_topbar">My Free Time 🎮</string>
+    <string name="tab_games_drawing">Games &amp; Drawing 🎨</string>
+    <string name="tab_books_movies">Books &amp; Movies 🎬</string>
+    <string name="tab_weekend_wishes">Weekend Wishes ⭐</string>
+
+    <!-- Pets Screen -->
+    <string name="pets_topbar">Pets Care 🐾</string>
+    <string name="pets_subtitle">Care for your pets (%1$s &amp; %2$s) every day! 🐱🐶</string>
+
+    <!-- Music Screen -->
+    <string name="music_topbar">Music &amp; Lofi Corner 🎵</string>
+    <string name="tab_cozy_player">Cozy Lofi Player 🎧</string>
+    <string name="tab_sheet_music">Music School &amp; Notes 🎼</string>
+    <string name="custom_mp3_title">My MP3 Songs 🎵</string>
+    <string name="btn_add_mp3">+ Add Song</string>
+
+    <!-- Diary Screen -->
+    <string name="diary_topbar">Protected Secret Diary 📖</string>
+
+    <!-- Settings Dialog -->
+    <string name="settings_title">System Settings ⚙️</string>
+    <string name="label_user_name">User Name</string>
+    <string name="label_cat_name">Cat Name 🐱</string>
+    <string name="label_dog_name">Dog Name 🐶</string>
+    <string name="label_change_pin">Change 4-digit PIN 🔒</string>
+    <string name="label_new_pin">New PIN (optional)</string>
+    <string name="label_confirm_pin">Confirm New PIN</string>
+    <string name="btn_save_settings">Save Changes ✨</string>
+    <string name="btn_reset_data">Reset All Data ⚠️</string>
+    <string name="reset_dialog_title">Reset All Data? ⚠️</string>
+    <string name="reset_dialog_desc">This action will delete all tasks, diary entries, pets logs and reset app to initial state.</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_reset_confirm">Reset All</string>
+
+    <!-- About App -->
+    <string name="btn_about_app">About App &amp; Privacy ℹ️</string>
+    <string name="about_title">About My Little Planner 🐾</string>
+    <string name="app_version">Version: %1$s</string>
+    <string name="about_disclaimer">This app is 100% FREEWARE.\nIt works completely offline, does not collect any personal data, and does not communicate with any servers. Your privacy is fully protected!</string>
+    <string name="about_support">If you and your child like the app, you can optionally support the development with a small coffee. ☕</string>
+    <string name="btn_paypal">Buy me a coffee ($2)</string>
+    <string name="ips_scan_instruction">N/A</string>
+
+    <!-- Pin Dialog -->
+    <string name="pin_title">Enter PIN 🔒</string>
+    <string name="pin_subtitle">Diary is protected by 4-digit PIN</string>
+    <string name="pin_error_incorrect">Incorrect PIN. Try again!</string>
+
+    <!-- Backup & Restore -->
+    <string name="btn_export_backup">Export Backup (Save Data) 💾</string>
+    <string name="btn_import_backup">Import Backup (Restore Data) 📂</string>
+    <string name="msg_backup_created">Backup created and ready for sharing! 💾✨</string>
+    <string name="msg_restore_success">Data restored successfully! 🎉</string>
+</resources>

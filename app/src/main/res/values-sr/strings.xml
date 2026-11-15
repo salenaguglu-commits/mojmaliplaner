@@ -1,0 +1,109 @@
+<resources>
+    <string name="app_name">Moj Mali Planer</string>
+    <string name="btn_send_plan">Pošalji plan</string>
+    <string name="msg_plan_copied">Plan je kopiran i spreman za slanje! 📩✨</string>
+    <string name="share_plan_title">%1$s - Moj Mali Planer za danas 🐱</string>
+    <string name="share_tasks_header">📌 Današnji zadaci i obaveze:</string>
+    <string name="share_empty_tasks">🌸 Nemam novih zakazanih obaveza za danas, uživam u slobodnom vremenu!</string>
+    <string name="share_footer">Šaljem ti moj plan! 💕✨</string>
+    <string name="share_chooser_title">Pošalji plan preko...</string>
+
+    <!-- Home Categories -->
+    <string name="cat_calendar_title">Kalendar za\nobaveze</string>
+    <string name="cat_calendar_sub">Planiraj dane</string>
+    <string name="cat_daily_plan_title">Moj današnji\nplan</string>
+    <string name="cat_daily_plan_sub">Dnevne zadatke</string>
+    <string name="cat_study_title">Šta treba\nda učim?</string>
+    <string name="cat_study_sub">Škola i zadaci</string>
+    <string name="cat_free_time_title">Moje slobodno\nvreme</string>
+    <string name="cat_free_time_sub">Hobi i zabava</string>
+    <string name="cat_pets_title">Kućni\nljubimci</string>
+    <string name="cat_pets_sub">Maca, pas i dr.</string>
+    <string name="cat_music_title">Muzika\n </string>
+    <string name="cat_music_sub">Omiljene pesme</string>
+    <string name="btn_diary_title">DNEVNIK . . . . .</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Dobrodošli u Moj Mali Planer! ✨</string>
+    <string name="onboarding_sub">Hajde da podesimo profil i tajni 4-cifreni PIN.</string>
+    <string name="label_your_name">Tvoje ime</string>
+    <string name="label_secret_pin">Tajni 4-cifreni PIN</string>
+    <string name="btn_start_planner">Započni Planer ✨</string>
+
+    <!-- Calendar Screen -->
+    <string name="calendar_topbar">Kalendar obaveza 📅</string>
+    <string name="tab_monthly_grid">Mesečni prikaz 🗓️</string>
+    <string name="tab_weekly_agenda">Nedeljni pregled 📆</string>
+    <string name="btn_add_task">Dodaj obavezu</string>
+    <string name="placeholder_task_title">Naziv obaveze...</string>
+    <string name="empty_tasks_day">Nema zapisanih obaveza za ovaj dan ✨</string>
+
+    <!-- Daily Plan Screen -->
+    <string name="daily_plan_topbar">Moj današnji plan 📝</string>
+    <string name="quick_templates_title">Brzi Šabloni ⚡</string>
+    <string name="tmpl_clean_room">Sredi sobu 🧹</string>
+    <string name="tmpl_homework">Uradi domaći 📚</string>
+    <string name="tmpl_pack_bag">Spakuj ranac 🎒</string>
+    <string name="tmpl_drink_water">Popij vodu 💧</string>
+    <string name="stars_reward_text">Sakupljene Zlatne Zvezdice Danas: </string>
+
+    <!-- Study Screen -->
+    <string name="study_topbar">Raspored Časova i Zadaci 📚</string>
+    <string name="tab_timetable">Raspored Časova 🗓️</string>
+    <string name="tab_homework">Domaći i Testovi 📝</string>
+
+    <!-- Free Time Screen -->
+    <string name="free_time_topbar">Moje slobodno vreme 🎮</string>
+    <string name="tab_games_drawing">Igre &amp; Crtanje 🎨</string>
+    <string name="tab_books_movies">Knjige &amp; Filmovi 🎬</string>
+    <string name="tab_weekend_wishes">Vikend Želje ⭐</string>
+
+    <!-- Pets Screen -->
+    <string name="pets_topbar">Kućni ljubimci 🐾</string>
+    <string name="pets_subtitle">Brini o ljubimcima (%1$s i %2$s) svaki dan! 🐱🐶</string>
+
+    <!-- Music Screen -->
+    <string name="music_topbar">Muzika &amp; Lofi Kutak 🎵</string>
+    <string name="tab_cozy_player">Cozy Lofi Player 🎧</string>
+    <string name="tab_sheet_music">Muzička škola &amp; Note 🎼</string>
+    <string name="custom_mp3_title">Moje Pesme (MP3) 🎵</string>
+    <string name="btn_add_mp3">+ Dodaj pesmu</string>
+
+    <!-- Diary Screen -->
+    <string name="diary_topbar">Zaštićeni Dnevnik 📖</string>
+
+    <!-- Settings Dialog -->
+    <string name="settings_title">Podešavanja Sistema ⚙️</string>
+    <string name="label_user_name">Ime korisnika</string>
+    <string name="label_cat_name">Ime mačke 🐱</string>
+    <string name="label_dog_name">Ime psa 🐶</string>
+    <string name="label_change_pin">Promena 4-cifrenog PIN koda 🔒</string>
+    <string name="label_new_pin">Novi PIN (opciono)</string>
+    <string name="label_confirm_pin">Potvrdi novi PIN</string>
+    <string name="btn_save_settings">Sačuvaj izmene ✨</string>
+    <string name="btn_reset_data">Resetuj sve podatke ⚠️</string>
+    <string name="reset_dialog_title">Resetuj sve podatke? ⚠️</string>
+    <string name="reset_dialog_desc">Ova akcija će obrisati sve zadatke, dnevnike, ljubimce i vratiti aplikaciju na početno stanje.</string>
+    <string name="btn_cancel">Otkaži</string>
+    <string name="btn_reset_confirm">Resetuj sve</string>
+
+    <!-- About App -->
+    <string name="btn_about_app">O aplikaciji i Privatnost ℹ️</string>
+    <string name="about_title">O aplikaciji Moj Mali Planer 🐾</string>
+    <string name="app_version">Verzija: %1$s</string>
+    <string name="about_disclaimer">Ova aplikacija je 100% BESPLATNA.\nRadi potpuno offline, ne prikuplja nikakve podatke o vama i ne komunicira sa serverima. Vaša privatnost je apsolutno zaštićena!</string>
+    <string name="about_support">Ukoliko se vama i vašem detetu dopada aplikacija, možete simbolično podržati dalji razvoj uz kaficu. ☕</string>
+    <string name="btn_paypal">N/A (Srbija koristi IPS)</string>
+    <string name="ips_scan_instruction">Skeniraj IPS QR kod iz banke</string>
+
+    <!-- Pin Dialog -->
+    <string name="pin_title">Unesite PIN 🔒</string>
+    <string name="pin_subtitle">Dnevnik je zaštićen 4-cifrenim PIN-om</string>
+    <string name="pin_error_incorrect">Netačan PIN. Pokušajte ponovo!</string>
+
+    <!-- Backup & Restore -->
+    <string name="btn_export_backup">Napravi rezervnu kopiju (Backup) 💾</string>
+    <string name="btn_import_backup">Vrati podatke iz kopije (Restore) 📂</string>
+    <string name="msg_backup_created">Rezervna kopija kreirana i spremna za slanje! 💾✨</string>
+    <string name="msg_restore_success">Podaci su uspešno vraćeni! 🎉</string>
+</resources>
