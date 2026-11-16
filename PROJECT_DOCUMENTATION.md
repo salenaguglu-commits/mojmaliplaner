@@ -193,21 +193,16 @@ Stores imported MP3 audio file metadata.
 - **"Resetuj sve podatke ⚠️" Button**: Wipes Room tables, resets DataStore, and deletes internal `custom_audio` files.
 
 ### 11. About App & Privacy (`AboutAppDialog.kt`)
-- Displays app version dynamically (`Version: 1.2`).
-- **Privacy Manifesto:** Clarifies 100% Freeware, 100% offline, zero data collection.
-- **Bilingual Donation Integration (`CountryDetector.kt`)**:
-  - **Serbia (`"rs"`)**: Renders an interactive **NBS IPS QR Code** (200 RSD donation) generated on-the-fly using ZXing (`QRCodeWriter`).
-  - **International**: Renders a **PayPal Button** opening `https://paypal.me/salenaguglu/2USD` in external web browser.
+- Displays app version dynamically (`Version: 1.3`).
+- **Privacy Manifesto:** Clarifies 100% Freeware, 100% offline, zero data collection. Removed all external links or payment prompts to comply with Google Play Families policy.
 
 ---
 
-## 🌍 Global Locale & Country Detection (`CountryDetector.kt`)
+## 🌍 Global Locale & Country Detection (`locales_config.xml`)
 
-The app dynamically sets locale in `MainActivity.attachBaseContext()`:
-1. Queries `TelephonyManager.simCountryIso` and `networkCountryIso`.
-2. Checks if ISO contains `"rs"` (Serbia) or system locale is `"sr"`.
-3. If Serbia: Forces `Locale("sr", "RS")` -> Loads `res/values-sr/strings.xml`.
-4. If International: Forces `Locale.ENGLISH` -> Loads `res/values/strings.xml`.
+The app dynamically sets locale via Android's native system properties rather than forcing a SIM-based override.
+- **Android 13+ Per-App Language:** Included `res/xml/locales_config.xml` to specify `en` and `sr` as supported locales.
+- **Language Selection:** Language logic checks active system locale via `LocalConfiguration.current.locales[0].language`.
 
 ---
 
@@ -215,31 +210,38 @@ The app dynamically sets locale in `MainActivity.attachBaseContext()`:
 
 ```
 com.elena.mojmaliplaner
-├── MainActivity.kt                      # Main entry activity, applies CountryDetector locale
+├── MainActivity.kt                      # Main entry activity
 ├── data
 │   ├── AppRepository.kt                 # Central Room DB repository
 │   ├── BackupManager.kt                 # JSON Backup & Restore exporter/importer
-│   ├── CountryDetector.kt               # SIM/Network ISO & Locale configuration helper
+│   ├── StickerCatalog.kt                # Static data catalog for 20 collectible animal stickers
 │   ├── UserPreferencesRepository.kt     # Preferences DataStore manager
+│   ├── quiz
+│   │   ├── QuizModels.kt                # QuizQuestion data model and schemas
+│   │   ├── QuizPackDownloader.kt        # Remote JSON pack fetcher & downloader via HttpURLConnection
+│   │   └── QuizRepository.kt            # Handles reading starter_quiz.json and imported packs
 │   └── db
-│       ├── AppDatabase.kt               # Room database configuration (v2)
-│       ├── Daos.kt                      # Room DAOs (TaskDao, PetLogDao, DiaryDao, etc.)
-│       └── Entities.kt                  # Room Entities (Task, PetLog, Diary, MusicSheet, CustomTrack)
+│       ├── AppDatabase.kt               # Room database configuration (v3, with migrations)
+│       ├── Daos.kt                      # Room DAOs (TaskDao, PetLogDao, DiaryDao, StickerDao)
+│       └── Entities.kt                  # Room Entities (Task, PetLog, Diary, MusicSheet, CustomTrack, UnlockedSticker)
 └── ui
     ├── navigation
     │   └── AppNavigation.kt             # Compose NavHost & route declarations
     ├── screens
-    │   ├── AboutAppDialog.kt            # Privacy manifesto, Version info, NBS IPS QR & PayPal
+    │   ├── AboutAppDialog.kt            # Privacy manifesto, Version info
     │   ├── CalendarScreen.kt            # Monthly Grid & Weekly Agenda with real LocalDate
     │   ├── DailyPlanScreen.kt           # Daily checklist, templates & star reward counter
     │   ├── DiaryScreen.kt               # Secret diary entries with mood emojis
     │   ├── FreeTimeScreen.kt            # Hobbies, books/movies ratings & weekend wishes (Room backed)
     │   ├── HomeScreen.kt                # Main grid, cat long-press trigger & Send Plan action
+    │   ├── LanguageGameScreen.kt        # Upcoming game screen using quiz packs
+    │   ├── LanguagePacksDialog.kt       # Remote quiz pack downloader and importer
     │   ├── MusicScreen.kt               # Lofi player, circular progress ring, SAF MP3 & Sheet music
     │   ├── OnboardingScreen.kt          # Profile & PIN setup on first launch
-    │   ├── PetsScreen.kt                # Tamagotchi cat & dog care logging
+    │   ├── PetsScreen.kt                # Tamagotchi cat & dog care logging + unlocked legendaries
     │   ├── PinDialog.kt                 # 4-digit PIN authentication keypad dialog
     │   ├── SettingsDialog.kt            # System settings, PIN update, Backup/Restore & Reset
+    │   ├── StickerAlbumScreen.kt        # Album UI for unlocked stickers, 3⭐ scratch pack game
     │   └── StudyScreen.kt               # School timetable & homework backlog
     ├── theme
     │   ├── Color.kt                     # Pastel Blue, Purple, Soft Gold & Dark theme colors
