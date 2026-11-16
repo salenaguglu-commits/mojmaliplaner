@@ -1,7 +1,7 @@
 # 🐱 Moj Mali Planer (My Little Planner) — Complete System Architecture & Feature Documentation
 
 > **Target Audience:** AI Developer Agents / System Architects (Gemini Hydrogen / LLM Context)  
-> **App Version:** 1.2 (Version Code: 3)  
+> **App Version:** 1.3 (Version Code: 4)  
 > **Package Name:** `com.elena.mojmaliplaner`  
 > **SDK Compatibility:** Min SDK 26 (Android 8.0), Target SDK 35 (Android 15), Compile SDK 37  
 
@@ -166,13 +166,14 @@ Stores imported MP3 audio file metadata.
 - Interactive Tamagotchi care cards for Cat (`catName`) and Dog (`dogName`).
 - Care buttons: Feed 🍖, Give Water 💧, Brush 🪮, Cuddle 💖, Walk 🦮, Play 🎾.
 - Logs every care interaction into `PetLogEntity` with timestamp.
-- Profile dialog shows detailed daily care history and statistics.
+- **Unlockable Pets Expansion:** Dynamically loads up to 5 legendary pets (Axolotl, Capybara, Red Panda, Fennec Fox, Snowy Owl) once their corresponding sticker is unlocked in `unlocked_stickers` table. These pets share full interaction logic with the core cat/dog.
 
 ### 8. Music & Lofi Corner (`MusicScreen.kt` & `MusicViewModel.kt`)
 - **Tab 1 — Cozy Lofi Player 🎧:**
   - Built-in factory tracks: Lofi melodies (*Tokyo Vibe*, *Sonder Beat*, *Classic Hip-Hop*) & Sound Ambience (*Calming Rain*, *Cute Cat*, *Cat Meow*, *Dog Bark*).
   - **Custom MP3 Import:** SAF picker (`ActivityResultContracts.GetContent("audio/*")`). Selected files are safely copied to app internal storage (`files/custom_audio/custom_*.mp3`) for offline playback, recorded in `CustomTrackEntity`, and displayed in "Moje Pesme (MP3)" list with delete support.
   - **Subtle Circular Progress Bar:** Dual `CircularProgressIndicator` layered around the cat mascot avatar showing real-time song progress arc (`currentPositionMs` / `trackDurationMs`) updated via 200ms coroutine loop.
+  - **Audio Track Sharing (`AudioShareHelper.kt`):** Users can share both custom imported MP3s and built-in Lofi tracks (via localized cache cloning) using Android Share Sheet.
   - **Asynchronous MediaPlayer:** Uses `prepareAsync()` and `setOnPreparedListener` to avoid UI main-thread freezing (ANR protection).
   - **Sleep Timer & Volume:** Volume slider (0.0 to 1.0) and 15, 30, 45 minute auto-stop sleep countdown.
 - **Tab 2 — Sheet Music Gallery 🎼:**
