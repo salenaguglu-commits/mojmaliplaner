@@ -17,8 +17,11 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 enum class StarType {
     BRONZE,
@@ -264,6 +267,115 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun updateTask(task: TaskEntity) {
+        viewModelScope.launch {
+            appRepository.updateTask(task)
+        }
+    }
+
+    private val freeTimeSeedMutex = Mutex()
+
+    fun seedFreeTimeDefaultsIfNeeded(isSerbia: Boolean) {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            freeTimeSeedMutex.withLock {
+                if (userPreferencesRepository.isFreeTimeDefaultsSeeded()) return@withLock
+                val existingTasks = appRepository.allTasks.first()
+
+                if (existingTasks.none { it.category == "SLOBODNO_IDEJA" }) {
+                    val defaults = if (isSerbia) {
+                        listOf(
+                            "Nacrtaj novu avanturu Mije i Blekija 🎨",
+                            "Napravi slagalicu ili lego kulu 🧱",
+                            "Pravi figurice od plastelina 🌈",
+                            "Nauči novu društvenu igru sa drugarima 🎲"
+                        )
+                    } else {
+                        listOf(
+                            "Draw a new adventure of Mia and Blacky 🎨",
+                            "Build a puzzle or Lego tower 🧱",
+                            "Make clay figurines 🌈",
+                            "Learn a new board game with friends 🎲"
+                        )
+                    }
+                    defaults.forEach { title ->
+                        appRepository.insertTask(
+                            TaskEntity(
+                                title = title,
+                                category = "SLOBODNO_IDEJA",
+                                dateMillis = System.currentTimeMillis(),
+                                colorHex = "#6EC5E9",
+                                isCompleted = false,
+                                subjectName = null
+                            )
+                        )
+                    }
+                }
+
+                if (existingTasks.none { it.category == "SLOBODNO_MEDA" }) {
+                    val defaults = if (isSerbia) {
+                        listOf(
+                            "Mali Princ" to "5",
+                            "Kralj Lavova" to "5",
+                            "Gospodar prstenova" to "5",
+                            "Hobit" to "5"
+                        )
+                    } else {
+                        listOf(
+                            "The Little Prince" to "5",
+                            "The Lion King" to "5",
+                            "The Lord of the Rings" to "5",
+                            "The Hobbit" to "5"
+                        )
+                    }
+                    defaults.forEach { (title, rating) ->
+                        appRepository.insertTask(
+                            TaskEntity(
+                                title = title,
+                                category = "SLOBODNO_MEDA",
+                                dateMillis = System.currentTimeMillis(),
+                                colorHex = "#C49ED4",
+                                isCompleted = false,
+                                subjectName = rating
+                            )
+                        )
+                    }
+                }
+
+                if (existingTasks.none { it.category == "SLOBODNO_ZELJA" }) {
+                    val defaults = if (isSerbia) {
+                        listOf(
+                            "Odlazak u prirodu sa Blekijem 🐕",
+                            "Pravljenje neke sjajne poslastice 🧁",
+                            "Vožnja bicikla 🚲",
+                            "Komponovanje nove kompozicije 🎼"
+                        )
+                    } else {
+                        listOf(
+                            "Trip to nature with Blacky 🐕",
+                            "Baking a delicious treat 🧁",
+                            "Riding a bicycle 🚲",
+                            "Composing a new tune 🎼"
+                        )
+                    }
+                    defaults.forEach { title ->
+                        appRepository.insertTask(
+                            TaskEntity(
+                                title = title,
+                                category = "SLOBODNO_ZELJA",
+                                dateMillis = System.currentTimeMillis(),
+                                colorHex = "#CBA84E",
+                                isCompleted = false,
+                                subjectName = null
+                            )
+                        )
+                    }
+                }
+
+                userPreferencesRepository.setFreeTimeDefaultsSeeded(true)
+            }
+        }
+    }
+
     fun deleteTask(task: TaskEntity) {
         viewModelScope.launch {
             appRepository.deleteTask(task)
@@ -366,18 +478,29 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
                 val parsed = com.elena.mojmaliplaner.data.BackupManager.parseBackupJson(jsonString) ?: return@launch
 
-                if (!parsed.userName.isNullOrBlank()) updateUserName(parsed.userName)
-                if (!parsed.catName.isNullOrBlank() && !parsed.dogName.isNullOrBlank()) {
-                    updatePetNames(parsed.catName, parsed.dogName)
-                }
-                if (!parsed.userPin.isNullOrBlank()) updateUserPin(parsed.userPin)
+                userPreferencesRepository.restoreBackupPreferences(
+                    userName = parsed.userName,
+                    catName = parsed.catName,
+                    dogName = parsed.dogName,
+                    userPin = parsed.userPin,
+                    bronzeStars = parsed.bronzeStars,
+                    silverStars = parsed.silverStars,
+                    availableStars = parsed.availableStars,
+                    totalStars = parsed.totalStars,
+                    solvedQuestionIds = parsed.solvedQuestionIds,
+                    rewardedTaskIds = parsed.rewardedTaskIds
+                )
 
                 parsed.tasks.forEach { task ->
                     appRepository.insertTask(task)
                 }
 
+                if (parsed.tasks.any { it.category.startsWith("SLOBODNO_") }) {
+                    userPreferencesRepository.setFreeTimeDefaultsSeeded(true)
+                }
+
                 parsed.petLogs.forEach { log ->
-                    appRepository.logPetAction(log.petType, log.actionType)
+                    appRepository.insertPetLog(log)
                 }
 
                 parsed.diaryEntries.forEach { entry ->

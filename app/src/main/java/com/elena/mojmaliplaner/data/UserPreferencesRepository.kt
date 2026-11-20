@@ -38,6 +38,7 @@ class UserPreferencesRepository(private val context: Context) {
         val REWARDED_TASK_IDS = stringSetPreferencesKey("rewarded_task_ids")
         val SOLVED_QUESTION_IDS = stringSetPreferencesKey("solved_question_ids")
         val APP_LANGUAGE = stringPreferencesKey("app_language")
+        val FREE_TIME_DEFAULTS_SEEDED = booleanPreferencesKey("free_time_defaults_seeded")
     }
 
     val userNameFlow: Flow<String> = context.dataStore.data.map { prefs ->
@@ -222,6 +223,45 @@ class UserPreferencesRepository(private val context: Context) {
         context.dataStore.edit { prefs ->
             prefs[PreferencesKeys.CAT_NAME] = catName
             prefs[PreferencesKeys.DOG_NAME] = dogName
+        }
+    }
+
+    suspend fun isFreeTimeDefaultsSeeded(): Boolean {
+        val prefs = context.dataStore.data.first()
+        return prefs[PreferencesKeys.FREE_TIME_DEFAULTS_SEEDED] ?: false
+    }
+
+    suspend fun setFreeTimeDefaultsSeeded(seeded: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[PreferencesKeys.FREE_TIME_DEFAULTS_SEEDED] = seeded
+        }
+    }
+
+    suspend fun restoreBackupPreferences(
+        userName: String?,
+        catName: String?,
+        dogName: String?,
+        userPin: String?,
+        bronzeStars: Int,
+        silverStars: Int,
+        availableStars: Int,
+        totalStars: Int,
+        solvedQuestionIds: Set<String>,
+        rewardedTaskIds: Set<String>? = null
+    ) {
+        context.dataStore.edit { prefs ->
+            if (!userName.isNullOrBlank()) prefs[PreferencesKeys.USER_NAME] = userName
+            if (!catName.isNullOrBlank()) prefs[PreferencesKeys.CAT_NAME] = catName
+            if (!dogName.isNullOrBlank()) prefs[PreferencesKeys.DOG_NAME] = dogName
+            if (!userPin.isNullOrBlank()) prefs[PreferencesKeys.USER_PIN] = userPin
+            prefs[PreferencesKeys.BRONZE_STARS] = bronzeStars.coerceAtLeast(0)
+            prefs[PreferencesKeys.SILVER_STARS] = silverStars.coerceAtLeast(0)
+            prefs[PreferencesKeys.AVAILABLE_STARS] = availableStars.coerceAtLeast(0)
+            prefs[PreferencesKeys.TOTAL_STARS] = totalStars.coerceAtLeast(0)
+            prefs[PreferencesKeys.SOLVED_QUESTION_IDS] = solvedQuestionIds
+            if (rewardedTaskIds != null) {
+                prefs[PreferencesKeys.REWARDED_TASK_IDS] = rewardedTaskIds
+            }
         }
     }
 

@@ -6,21 +6,30 @@ plugins {
 
 android {
     namespace = "com.elena.mojmaliplaner"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.elena.mojmaliplaner"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("debugConfig") {
+            storeFile = file("${rootDir}/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         debug {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("debugConfig")
         }
         release {
             isMinifyEnabled = false

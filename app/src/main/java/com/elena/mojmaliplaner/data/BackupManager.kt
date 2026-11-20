@@ -28,6 +28,7 @@ object BackupManager {
         availableStars: Int,
         totalStars: Int,
         solvedQuestionIds: Set<String>,
+        rewardedTaskIds: Set<String> = emptySet(),
         tasks: List<TaskEntity>,
         petLogs: List<PetLogEntity>,
         diaryEntries: List<DiaryEntryEntity>,
@@ -49,6 +50,10 @@ object BackupManager {
             val solvedArray = JSONArray()
             solvedQuestionIds.forEach { solvedArray.put(it) }
             put("solvedQuestionIds", solvedArray)
+
+            val rewardedArray = JSONArray()
+            rewardedTaskIds.forEach { rewardedArray.put(it) }
+            put("rewardedTaskIds", rewardedArray)
         }
         root.put("preferences", prefs)
 
@@ -144,7 +149,9 @@ object BackupManager {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
 
-            context.startActivity(Intent.createChooser(shareIntent, "Sačuvaj rezervnu kopiju (Backup)"))
+            val isSerbia = context.resources.configuration.locales[0].language.equals("sr", ignoreCase = true)
+            val chooserTitle = if (isSerbia) "Sačuvaj rezervnu kopiju (Backup)" else "Save Backup"
+            context.startActivity(Intent.createChooser(shareIntent, chooserTitle))
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -160,6 +167,7 @@ object BackupManager {
         val availableStars: Int,
         val totalStars: Int,
         val solvedQuestionIds: Set<String>,
+        val rewardedTaskIds: Set<String>?,
         val tasks: List<TaskEntity>,
         val petLogs: List<PetLogEntity>,
         val diaryEntries: List<DiaryEntryEntity>,
@@ -188,6 +196,15 @@ object BackupManager {
                     solvedSet.add(solvedArray.getString(i))
                 }
             }
+
+            val rewardedArray = prefs?.optJSONArray("rewardedTaskIds")
+            val rewardedSet = if (rewardedArray != null) {
+                mutableSetOf<String>().apply {
+                    for (i in 0 until rewardedArray.length()) {
+                        add(rewardedArray.getString(i))
+                    }
+                }
+            } else null
 
             // Tasks
             val tasksList = mutableListOf<TaskEntity>()
@@ -237,7 +254,7 @@ object BackupManager {
                             title = obj.getString("title"),
                             content = obj.getString("content"),
                             moodEmoji = obj.getString("moodEmoji"),
-                            imageUri = obj.optString("imageUri", null)
+                            imageUri = obj.optString("imageUri").ifEmpty { null }
                         )
                     )
                 }
@@ -285,6 +302,7 @@ object BackupManager {
                 availableStars = availableStars,
                 totalStars = totalStars,
                 solvedQuestionIds = solvedSet,
+                rewardedTaskIds = rewardedSet,
                 tasks = tasksList,
                 petLogs = petLogsList,
                 diaryEntries = diaryList,

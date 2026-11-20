@@ -6,8 +6,23 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,6 +60,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,6 +69,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -64,7 +81,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elena.mojmaliplaner.R
 import com.elena.mojmaliplaner.data.db.TaskEntity
+import com.elena.mojmaliplaner.ui.components.AnimatedAtmosphereBackground
+import com.elena.mojmaliplaner.ui.components.bouncyClickable
+import com.elena.mojmaliplaner.ui.components.shimmerSheen
 import com.elena.mojmaliplaner.ui.navigation.Routes
+import kotlinx.coroutines.delay
 import com.elena.mojmaliplaner.ui.theme.BlackCharcoal
 import com.elena.mojmaliplaner.ui.theme.BrightCreamText
 import com.elena.mojmaliplaner.ui.theme.DarkCardBase
@@ -202,6 +223,16 @@ fun HomeScreen(
         topBar = {
             TopAppBar(
                 title = {
+                    val catTransition = rememberInfiniteTransition(label = "cat_bob")
+                    val catBobY by catTransition.animateFloat(
+                        initialValue = -2f,
+                        targetValue = 2f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(1600, easing = FastOutSlowInEasing),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "catBobY"
+                    )
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -220,7 +251,8 @@ fun HomeScreen(
                         ) {
                             Text(
                                 text = "🐱",
-                                fontSize = 24.sp
+                                fontSize = 24.sp,
+                                modifier = Modifier.graphicsLayer { translationY = catBobY }
                             )
                         }
 
@@ -279,14 +311,23 @@ fun HomeScreen(
                     }
 
                     IconButton(onClick = onToggleTheme) {
-                        Text(
-                            text = if (isDarkTheme) "☀️" else "🌙",
-                            fontSize = 20.sp
-                        )
+                        AnimatedContent(
+                            targetState = isDarkTheme,
+                            transitionSpec = {
+                                (fadeIn(tween(240)) + scaleIn(initialScale = 0.65f, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)))
+                                    .togetherWith(fadeOut(tween(180)) + scaleOut(targetScale = 0.65f))
+                            },
+                            label = "theme_toggle_icon"
+                        ) { dark ->
+                            Text(
+                                text = if (dark) "☀️" else "🌙",
+                                fontSize = 20.sp
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
+                    containerColor = Color.Transparent,
                     titleContentColor = MaterialTheme.colorScheme.onBackground
                 )
             )
@@ -298,10 +339,12 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            AnimatedAtmosphereBackground(isDarkTheme = isDarkTheme)
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .alpha(if (isDarkTheme) 0.15f else 0.10f)
+                    .alpha(if (isDarkTheme) 0.12f else 0.08f)
             ) {
                 Text(
                     text = "🐱",
@@ -349,6 +392,7 @@ fun HomeScreen(
                             if (leftCategory != null) {
                                 PlannerGridCard(
                                     category = leftCategory,
+                                    index = rowIndex * 2,
                                     isDarkTheme = isDarkTheme,
                                     modifier = Modifier.weight(1f),
                                     onClick = { onNavigateToRoute(leftCategory.route) }
@@ -360,6 +404,7 @@ fun HomeScreen(
                             if (rightCategory != null) {
                                 PlannerGridCard(
                                     category = rightCategory,
+                                    index = rowIndex * 2 + 1,
                                     isDarkTheme = isDarkTheme,
                                     modifier = Modifier.weight(1f),
                                     onClick = { onNavigateToRoute(rightCategory.route) }
@@ -376,19 +421,32 @@ fun HomeScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(86.dp)
-                        .clickable { showPinDialogForDiary = true },
+                        .height(88.dp)
+                        .bouncyClickable(pressedScale = 0.96f) { showPinDialogForDiary = true },
                     shape = RoundedCornerShape(22.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = if (isDarkTheme) DarkCardBase else SoftGold
                     ),
                     border = BorderStroke(2.dp, SoftGold),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .clip(RoundedCornerShape(22.dp))
+                            .background(
+                                Brush.horizontalGradient(
+                                    colors = if (isDarkTheme) {
+                                        listOf(DarkCardBase, SoftGold.copy(alpha = 0.22f), DarkCardBase)
+                                    } else {
+                                        listOf(SoftGold, Color(0xFFE3C471), SoftGold)
+                                    }
+                                )
+                            )
+                            .shimmerSheen(
+                                shimmerColor = Color.White.copy(alpha = if (isDarkTheme) 0.16f else 0.34f),
+                                durationMillis = 3200
+                            )
                     ) {
                         Text(
                             text = "🐈‍⬛ 🦉 🌙 🌳",
@@ -491,10 +549,23 @@ fun HomeScreen(
 @Composable
 fun PlannerGridCard(
     category: PlannerCategory,
+    index: Int,
     isDarkTheme: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+    val entrance = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        delay(index * 45L)
+        entrance.animateTo(
+            targetValue = 1f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioLowBouncy,
+                stiffness = Spring.StiffnessMediumLow
+            )
+        )
+    }
+
     val cardBgColor = if (isDarkTheme) {
         DarkCardBase
     } else {
@@ -504,41 +575,60 @@ fun PlannerGridCard(
     val textColor = if (isDarkTheme) BrightCreamText else BlackCharcoal
 
     val cardBorder = if (isDarkTheme) {
-        BorderStroke(1.5.dp, category.borderColor)
+        BorderStroke(1.5.dp, category.borderColor.copy(alpha = 0.85f))
     } else {
-        BorderStroke(1.dp, category.lightBgColor)
+        BorderStroke(1.2.dp, Color.White.copy(alpha = 0.65f))
+    }
+
+    val gradientBrush = if (isDarkTheme) {
+        Brush.linearGradient(
+            colors = listOf(
+                category.lightBgColor.copy(alpha = 0.22f),
+                DarkCardBase,
+                category.borderColor.copy(alpha = 0.10f)
+            )
+        )
+    } else {
+        Brush.linearGradient(
+            colors = listOf(
+                category.lightBgColor,
+                category.lightBgColor.copy(alpha = 0.84f),
+                Color.White.copy(alpha = 0.35f)
+            )
+        )
     }
 
     Card(
         modifier = modifier
-            .height(130.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(18.dp),
+            .height(132.dp)
+            .graphicsLayer {
+                alpha = entrance.value
+                translationY = (1f - entrance.value) * 32f
+                val s = 0.92f + 0.08f * entrance.value
+                scaleX = s
+                scaleY = s
+            }
+            .bouncyClickable(pressedScale = 0.95f) { onClick() },
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = cardBgColor
         ),
         border = cardBorder,
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isDarkTheme) 5.dp else 4.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(18.dp))
+                .clip(RoundedCornerShape(20.dp))
+                .background(gradientBrush)
         ) {
-            if (isDarkTheme) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = category.lightBgColor.copy(alpha = 0.12f)
-                ) {}
-            }
-
             Text(
                 text = category.watermarkMotive,
                 fontSize = 40.sp,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .offset(x = 10.dp, y = 10.dp)
-                    .alpha(if (isDarkTheme) 0.22f else 0.18f)
+                    .alpha(if (isDarkTheme) 0.24f else 0.18f)
                     .graphicsLayer { rotationZ = -10f }
             )
 
@@ -554,9 +644,10 @@ fun PlannerGridCard(
                     verticalAlignment = Alignment.Top
                 ) {
                     Surface(
-                        modifier = Modifier.size(36.dp),
+                        modifier = Modifier.size(38.dp),
                         shape = CircleShape,
-                        color = if (isDarkTheme) category.lightBgColor.copy(alpha = 0.25f) else BlackCharcoal.copy(alpha = 0.12f)
+                        color = if (isDarkTheme) category.lightBgColor.copy(alpha = 0.28f) else Color.White.copy(alpha = 0.45f),
+                        border = BorderStroke(1.dp, if (isDarkTheme) category.borderColor.copy(alpha = 0.5f) else Color.White.copy(alpha = 0.7f))
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
@@ -570,7 +661,7 @@ fun PlannerGridCard(
 
                     Text(
                         text = category.emoji,
-                        fontSize = 20.sp
+                        fontSize = 22.sp
                     )
                 }
 

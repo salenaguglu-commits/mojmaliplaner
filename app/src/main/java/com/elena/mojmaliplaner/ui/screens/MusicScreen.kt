@@ -5,13 +5,26 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -59,6 +72,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -68,14 +82,21 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -83,12 +104,24 @@ import coil.compose.AsyncImage
 import com.elena.mojmaliplaner.R
 import com.elena.mojmaliplaner.data.db.CustomTrackEntity
 import com.elena.mojmaliplaner.data.db.MusicSheetEntity
+import com.elena.mojmaliplaner.ui.components.bouncyClickable
 import com.elena.mojmaliplaner.ui.theme.BlackCharcoal
+import com.elena.mojmaliplaner.ui.theme.PastelBlue
+import com.elena.mojmaliplaner.ui.theme.PastelPurple
 import com.elena.mojmaliplaner.ui.theme.SoftGold
 import com.elena.mojmaliplaner.ui.viewmodel.AudioTrack
 import com.elena.mojmaliplaner.ui.viewmodel.MusicViewModel
-
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlin.math.PI
+import kotlin.math.sin
+
+private fun formatMillis(ms: Int): String {
+    val totalSec = (ms / 1000).coerceAtLeast(0)
+    val mins = totalSec / 60
+    val secs = totalSec % 60
+    return "%d:%02d".format(mins, secs)
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -114,7 +147,12 @@ fun MusicScreen(
     val currentPositionMs by musicViewModel.currentPositionMs.collectAsState()
     val trackDurationMs by musicViewModel.trackDurationMs.collectAsState()
 
-    val playbackProgress = (currentPositionMs.toFloat() / trackDurationMs.toFloat().coerceAtLeast(1f)).coerceIn(0f, 1f)
+    val rawPlaybackProgress = (currentPositionMs.toFloat() / trackDurationMs.toFloat().coerceAtLeast(1f)).coerceIn(0f, 1f)
+    val smoothProgress by animateFloatAsState(
+        targetValue = if (currentTrack != null) rawPlaybackProgress else 0f,
+        animationSpec = tween(220, easing = LinearEasing),
+        label = "smooth_playback_progress"
+    )
 
     var showAddNoteDialog by remember { mutableStateOf(false) }
     var newSheetTitle by remember { mutableStateOf("") }
@@ -197,175 +235,20 @@ fun MusicScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         item {
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(24.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surface
-                                ),
-                                border = BorderStroke(2.dp, SoftGold),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(20.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-                                    val pulseScale by infiniteTransition.animateFloat(
-                                        initialValue = 1f,
-                                        targetValue = if (isPlaying) 1.12f else 1f,
-                                        animationSpec = infiniteRepeatable(
-                                            animation = tween(800, easing = FastOutSlowInEasing),
-                                            repeatMode = RepeatMode.Reverse
-                                        ),
-                                        label = "scale"
-                                    )
-
-                                    Box(contentAlignment = Alignment.Center) {
-                                        CircularProgressIndicator(
-                                            progress = { 1f },
-                                            modifier = Modifier.size(82.dp),
-                                            color = SoftGold.copy(alpha = 0.2f),
-                                            strokeWidth = 4.dp,
-                                            trackColor = Color.Transparent
-                                        )
-                                        CircularProgressIndicator(
-                                            progress = { if (isPlaying) playbackProgress else 0f },
-                                            modifier = Modifier.size(82.dp),
-                                            color = SoftGold,
-                                            strokeWidth = 4.dp,
-                                            trackColor = Color.Transparent
-                                        )
-
-                                        Surface(
-                                            modifier = Modifier
-                                                .size(68.dp)
-                                                .scale(pulseScale),
-                                            shape = CircleShape,
-                                            color = SoftGold.copy(alpha = 0.25f)
-                                        ) {
-                                            Box(contentAlignment = Alignment.Center) {
-                                                Text(
-                                                    text = if (isPlaying) "🎧 🐈‍⬛" else "🐈‍⬛",
-                                                    fontSize = 32.sp
-                                                )
-                                            }
-                                        }
-                                    }
-
-                                    Text(
-                                        text = currentTrack?.name ?: (if (isSerbia) "Izaberite muziku ili zvučni ambijent" else "Select music or sound ambience"),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-
-                                    Button(
-                                        onClick = { musicViewModel.togglePlayPause() },
-                                        shape = CircleShape,
-                                        modifier = Modifier.size(60.dp),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = SoftGold,
-                                            contentColor = BlackCharcoal
-                                        )
-                                    ) {
-                                        Text(
-                                            text = if (isPlaying) "⏸️" else "▶️",
-                                            fontSize = 24.sp
-                                        )
-                                    }
-
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Text(text = "🔊", fontSize = 20.sp)
-
-                                        Slider(
-                                            value = volume,
-                                            onValueChange = { musicViewModel.setVolume(it) },
-                                            valueRange = 0f..1f,
-                                            modifier = Modifier.weight(1f),
-                                            colors = SliderDefaults.colors(
-                                                thumbColor = SoftGold,
-                                                activeTrackColor = SoftGold
-                                            )
-                                        )
-                                    }
-
-                                    Column(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                        ) {
-                                            Text(text = "⏱️", fontSize = 18.sp)
-
-                                            val timerText = if (sleepTimerMinutes != null && remainingSeconds > 0) {
-                                                val mins = remainingSeconds / 60
-                                                val secs = remainingSeconds % 60
-                                                "Timer: $mins min $secs sec"
-                                            } else {
-                                                if (isSerbia) "Sleep Timer za spavanje ⏱️" else "Sleep Timer ⏱️"
-                                            }
-
-                                            Text(
-                                                text = timerText,
-                                                style = MaterialTheme.typography.labelMedium,
-                                                fontWeight = FontWeight.Bold,
-                                                color = MaterialTheme.colorScheme.onSurface
-                                            )
-                                        }
-
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                        ) {
-                                            listOf(15, 30, 45).forEach { min ->
-                                                val isSelected = sleepTimerMinutes == min
-                                                Surface(
-                                                    modifier = Modifier.clickable {
-                                                        if (isSelected) musicViewModel.setSleepTimer(null)
-                                                        else musicViewModel.setSleepTimer(min)
-                                                    },
-                                                    shape = RoundedCornerShape(10.dp),
-                                                    color = if (isSelected) SoftGold else MaterialTheme.colorScheme.surfaceVariant
-                                                ) {
-                                                    Text(
-                                                        text = "$min min",
-                                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = if (isSelected) BlackCharcoal else MaterialTheme.colorScheme.onSurfaceVariant
-                                                    )
-                                                }
-                                            }
-
-                                            if (sleepTimerMinutes != null) {
-                                                Surface(
-                                                    modifier = Modifier.clickable { musicViewModel.setSleepTimer(null) },
-                                                    shape = RoundedCornerShape(10.dp),
-                                                    color = MaterialTheme.colorScheme.errorContainer
-                                                ) {
-                                                    Text(
-                                                        text = if (isSerbia) "Isključi" else "Turn Off",
-                                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = MaterialTheme.colorScheme.onErrorContainer
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            AnimatedMusicPlayerCard(
+                                currentTrack = currentTrack,
+                                isPlaying = isPlaying,
+                                playbackProgress = smoothProgress,
+                                currentPositionMs = currentPositionMs,
+                                trackDurationMs = trackDurationMs,
+                                volume = volume,
+                                sleepTimerMinutes = sleepTimerMinutes,
+                                remainingSeconds = remainingSeconds,
+                                isSerbia = isSerbia,
+                                onTogglePlayPause = { musicViewModel.togglePlayPause() },
+                                onVolumeChange = { musicViewModel.setVolume(it) },
+                                onSetSleepTimer = { musicViewModel.setSleepTimer(it) }
+                            )
                         }
 
                         // Lofi Tracks Section
@@ -476,6 +359,10 @@ fun MusicScreen(
                                     onDelete = { onDeleteCustomTrack(entity) }
                                 )
                             }
+                        }
+
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
                         }
                     }
                 }
@@ -693,6 +580,415 @@ fun MusicScreen(
 }
 
 @Composable
+private fun AnimatedMusicPlayerCard(
+    currentTrack: AudioTrack?,
+    isPlaying: Boolean,
+    playbackProgress: Float,
+    currentPositionMs: Int,
+    trackDurationMs: Int,
+    volume: Float,
+    sleepTimerMinutes: Int?,
+    remainingSeconds: Int,
+    isSerbia: Boolean,
+    onTogglePlayPause: () -> Unit,
+    onVolumeChange: (Float) -> Unit,
+    onSetSleepTimer: (Int?) -> Unit
+) {
+    // Smooth spinning vinyl angle that pauses cleanly in place when paused!
+    val vinylRotation = remember { Animatable(0f) }
+    LaunchedEffect(isPlaying) {
+        if (isPlaying) {
+            while (isActive) {
+                val startAngle = vinylRotation.value % 360f
+                vinylRotation.snapTo(startAngle)
+                vinylRotation.animateTo(
+                    targetValue = startAngle + 360f,
+                    animationSpec = tween(durationMillis = 6500, easing = LinearEasing)
+                )
+            }
+        }
+    }
+
+    val infiniteTransition = rememberInfiniteTransition(label = "music_player_anim")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = if (isPlaying) 1.08f else 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(750, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "mascot_pulse"
+    )
+    val auraScale by infiniteTransition.animateFloat(
+        initialValue = 0.94f,
+        targetValue = 1.18f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1300, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "aura_pulse"
+    )
+    val notesPhase by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2800, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "floating_notes"
+    )
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        border = BorderStroke(2.dp, SoftGold),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            SoftGold.copy(alpha = if (isPlaying) 0.20f else 0.10f),
+                            PastelPurple.copy(alpha = if (isPlaying) 0.12f else 0.04f),
+                            MaterialTheme.colorScheme.surface
+                        )
+                    )
+                )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Animated Spinning Vinyl + Glowing Ring + Floating Musical Notes
+                Box(
+                    modifier = Modifier.size(144.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Pulsing ambient aura rings while playing
+                    if (isPlaying) {
+                        Canvas(
+                            modifier = Modifier
+                                .size(138.dp)
+                                .scale(auraScale)
+                        ) {
+                            drawCircle(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        SoftGold.copy(alpha = 0.28f),
+                                        PastelBlue.copy(alpha = 0.12f),
+                                        Color.Transparent
+                                    )
+                                ),
+                                radius = size.minDimension / 2f
+                            )
+                        }
+                    }
+
+                    // Track Progress Ring
+                    CircularProgressIndicator(
+                        progress = { 1f },
+                        modifier = Modifier.size(120.dp),
+                        color = SoftGold.copy(alpha = 0.2f),
+                        strokeWidth = 5.dp,
+                        trackColor = Color.Transparent
+                    )
+                    CircularProgressIndicator(
+                        progress = { playbackProgress },
+                        modifier = Modifier.size(120.dp),
+                        color = SoftGold,
+                        strokeWidth = 5.dp,
+                        strokeCap = StrokeCap.Round,
+                        trackColor = Color.Transparent
+                    )
+
+                    // Spinning Vinyl Disc with grooves & golden label highlight
+                    Canvas(
+                        modifier = Modifier
+                            .size(102.dp)
+                            .graphicsLayer { rotationZ = vinylRotation.value }
+                    ) {
+                        val r = size.minDimension / 2f
+                        val c = Offset(size.width / 2f, size.height / 2f)
+                        drawCircle(
+                            brush = Brush.sweepGradient(
+                                colors = listOf(
+                                    Color(0xFF23252E),
+                                    Color(0xFF3E3B33),
+                                    Color(0xFF1F2028),
+                                    Color(0xFF474238),
+                                    Color(0xFF23252E)
+                                ),
+                                center = c
+                            ),
+                            radius = r,
+                            center = c
+                        )
+                        // Subtle vinyl grooves
+                        listOf(0.86f, 0.74f, 0.62f).forEach { frac ->
+                            drawCircle(
+                                color = SoftGold.copy(alpha = 0.22f),
+                                radius = r * frac,
+                                center = c,
+                                style = Stroke(width = 1.4f)
+                            )
+                        }
+                        // Specular shine dot so rotation is unmistakably visible
+                        drawCircle(
+                            color = SoftGold.copy(alpha = 0.75f),
+                            radius = 4.5f,
+                            center = Offset(c.x, c.y - r * 0.78f)
+                        )
+                    }
+
+                    // Center Cat Mascot Label
+                    Surface(
+                        modifier = Modifier
+                            .size(62.dp)
+                            .scale(pulseScale),
+                        shape = CircleShape,
+                        color = SoftGold.copy(alpha = 0.92f),
+                        border = BorderStroke(2.dp, MaterialTheme.colorScheme.surface)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = if (isPlaying) "🎧🐈‍⬛" else "🐈‍⬛",
+                                fontSize = if (isPlaying) 24.sp else 28.sp
+                            )
+                        }
+                    }
+
+                    // Floating Musical Notes rising while playing
+                    if (isPlaying) {
+                        val noteSpecs = listOf(
+                            Triple("🎵", -44f, 0f),
+                            Triple("🎶", 44f, 0.35f),
+                            Triple("✨", -26f, 0.68f)
+                        )
+                        noteSpecs.forEach { (symbol, baseX, delayPhase) ->
+                            val p = (notesPhase + delayPhase) % 1f
+                            val yOff = 18f - p * 82f
+                            val xOff = baseX + sin(p * 2f * PI.toFloat()) * 10f
+                            val alpha = sin(p * PI.toFloat()).coerceIn(0f, 1f)
+                            Text(
+                                text = symbol,
+                                fontSize = 18.sp,
+                                modifier = Modifier
+                                    .graphicsLayer {
+                                        translationX = xOff
+                                        translationY = yOff
+                                        val s = 0.75f + 0.35f * alpha
+                                        scaleX = s
+                                        scaleY = s
+                                    }
+                                    .alpha(alpha)
+                            )
+                        }
+                    }
+                }
+
+                // Live 7-bar Animated Equalizer Visualizer
+                AudioEqualizerBars(
+                    isPlaying = isPlaying,
+                    barCount = 7,
+                    modifier = Modifier.height(26.dp)
+                )
+
+                // Track Title & Time Readout
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = currentTrack?.name ?: (if (isSerbia) "Izaberite muziku ili zvučni ambijent" else "Select music or sound ambience"),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center
+                    )
+                    if (currentTrack != null && trackDurationMs > 0) {
+                        Text(
+                            text = "${formatMillis(currentPositionMs)} / ${formatMillis(trackDurationMs)}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                // Animated Play/Pause Button
+                Surface(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .bouncyClickable(pressedScale = 0.88f) { onTogglePlayPause() },
+                    shape = CircleShape,
+                    color = SoftGold,
+                    shadowElevation = if (isPlaying) 8.dp else 4.dp,
+                    border = BorderStroke(2.dp, Color.White.copy(alpha = 0.45f))
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        AnimatedContent(
+                            targetState = isPlaying,
+                            transitionSpec = {
+                                (scaleIn(spring(dampingRatio = Spring.DampingRatioMediumBouncy)) + fadeIn())
+                                    .togetherWith(scaleOut() + fadeOut())
+                            },
+                            label = "play_pause_icon"
+                        ) { playing ->
+                            Text(
+                                text = if (playing) "⏸️" else "▶️",
+                                fontSize = 26.sp
+                            )
+                        }
+                    }
+                }
+
+                // Volume Slider
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(text = if (volume <= 0.01f) "🔇" else "🔊", fontSize = 20.sp)
+
+                    Slider(
+                        value = volume,
+                        onValueChange = onVolumeChange,
+                        valueRange = 0f..1f,
+                        modifier = Modifier.weight(1f),
+                        colors = SliderDefaults.colors(
+                            thumbColor = SoftGold,
+                            activeTrackColor = SoftGold
+                        )
+                    )
+                }
+
+                // Sleep Timer Controls
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(text = "⏱️", fontSize = 18.sp)
+
+                        val timerText = if (sleepTimerMinutes != null && remainingSeconds > 0) {
+                            val mins = remainingSeconds / 60
+                            val secs = remainingSeconds % 60
+                            "Timer: $mins min $secs sec"
+                        } else {
+                            if (isSerbia) "Sleep Timer za spavanje ⏱️" else "Sleep Timer ⏱️"
+                        }
+
+                        Text(
+                            text = timerText,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        listOf(15, 30, 45).forEach { min ->
+                            val isSelected = sleepTimerMinutes == min
+                            Surface(
+                                modifier = Modifier.clickable {
+                                    if (isSelected) onSetSleepTimer(null)
+                                    else onSetSleepTimer(min)
+                                },
+                                shape = RoundedCornerShape(10.dp),
+                                color = if (isSelected) SoftGold else MaterialTheme.colorScheme.surfaceVariant
+                            ) {
+                                Text(
+                                    text = "$min min",
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSelected) BlackCharcoal else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        if (sleepTimerMinutes != null) {
+                            Surface(
+                                modifier = Modifier.clickable { onSetSleepTimer(null) },
+                                shape = RoundedCornerShape(10.dp),
+                                color = MaterialTheme.colorScheme.errorContainer
+                            ) {
+                                Text(
+                                    text = if (isSerbia) "Isključi" else "Turn Off",
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AudioEqualizerBars(
+    isPlaying: Boolean,
+    barCount: Int,
+    modifier: Modifier = Modifier
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "eq_bars")
+    val barDurations = listOf(420, 560, 380, 620, 480, 520, 400)
+    val barColors = listOf(PastelBlue, PastelPurple, SoftGold, PastelBlue, PastelPurple, SoftGold, PastelBlue)
+
+    val animatedFractions = List(barCount) { index ->
+        val raw by infiniteTransition.animateFloat(
+            initialValue = 0.22f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = barDurations[index % barDurations.size],
+                    delayMillis = (index * 70) % 240,
+                    easing = FastOutSlowInEasing
+                ),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "eq_bar_$index"
+        )
+        animateFloatAsState(
+            targetValue = if (isPlaying) raw else 0.18f,
+            animationSpec = tween(220),
+            label = "eq_bar_settled_$index"
+        ).value
+    }
+
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        verticalAlignment = Alignment.Bottom
+    ) {
+        animatedFractions.forEachIndexed { idx, frac ->
+            Box(
+                modifier = Modifier
+                    .width(6.dp)
+                    .height((24.dp * frac).coerceAtLeast(4.dp))
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(barColors[idx % barColors.size])
+            )
+        }
+    }
+}
+
+@Composable
 fun TrackCard(
     track: AudioTrack,
     isCurrent: Boolean,
@@ -707,15 +1003,16 @@ fun TrackCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onSelect() },
+            .bouncyClickable(pressedScale = 0.97f) { onSelect() },
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isCurrent) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
         ),
         border = BorderStroke(
             width = if (isCurrent) 2.dp else 1.dp,
-            color = if (isCurrent) SoftGold else MaterialTheme.colorScheme.outline
-        )
+            color = if (isCurrent) SoftGold else MaterialTheme.colorScheme.outline.copy(alpha = 0.65f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isCurrent) 4.dp else 1.dp)
     ) {
         Row(
             modifier = Modifier
@@ -730,7 +1027,7 @@ fun TrackCard(
                 modifier = Modifier.weight(1f)
             ) {
                 Surface(
-                    modifier = Modifier.size(42.dp),
+                    modifier = Modifier.size(44.dp),
                     shape = CircleShape,
                     color = if (isCurrent) SoftGold else MaterialTheme.colorScheme.surfaceVariant
                 ) {
@@ -759,6 +1056,16 @@ fun TrackCard(
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
+                if (isPlaying) {
+                    AudioEqualizerBars(
+                        isPlaying = true,
+                        barCount = 3,
+                        modifier = Modifier
+                            .height(20.dp)
+                            .padding(end = 6.dp)
+                    )
+                }
+
                 IconButton(onClick = {
                     coroutineScope.launch {
                         AudioShareHelper.shareAudioTrack(context, track)

@@ -21,13 +21,16 @@ import java.io.FileOutputStream
 data class AudioTrack(
     val id: String,
     val name: String,
+    val nameEn: String = name,
     @param:RawRes val resId: Int? = null,
     val filePath: String? = null,
     val category: String,
     val emoji: String,
     val isLooping: Boolean = true,
     val customTrackEntity: CustomTrackEntity? = null
-)
+) {
+    fun displayName(isSerbia: Boolean): String = if (isSerbia) name else nameEn
+}
 
 class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -36,13 +39,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private var progressJob: Job? = null
 
     val factoryTracks = listOf(
-        AudioTrack(id = "1", name = "Tokyo Vibe 🗼", resId = R.raw.tokyo_music, category = "LOFI", emoji = "🎧"),
-        AudioTrack(id = "2", name = "Sonder Beat 🎶", resId = R.raw.sonder_beat, category = "LOFI", emoji = "🎵"),
-        AudioTrack(id = "3", name = "Classic Hip-Hop 📻", resId = R.raw.musinova_classic_hip_hop, category = "LOFI", emoji = "🎼"),
-        AudioTrack(id = "4", name = "Meka kiša 🌧️", resId = R.raw.calming_rain, category = "AMBIENCE", emoji = "🌧️"),
-        AudioTrack(id = "5", name = "Macin glas 🐱", resId = R.raw.cute_cat, category = "AMBIENCE", emoji = "😸", isLooping = false),
-        AudioTrack(id = "6", name = "Mjaukanje 🐾", resId = R.raw.cat_meow, category = "AMBIENCE", emoji = "🐈‍⬛", isLooping = false),
-        AudioTrack(id = "7", name = "Bleki lavež 🐕", resId = R.raw.dragon_studio_dog_bark, category = "AMBIENCE", emoji = "🐶", isLooping = false)
+        AudioTrack(id = "1", name = "Tokyo Vibe 🗼", nameEn = "Tokyo Vibe 🗼", resId = R.raw.tokyo_music, category = "LOFI", emoji = "🎧"),
+        AudioTrack(id = "2", name = "Sonder Beat 🎶", nameEn = "Sonder Beat 🎶", resId = R.raw.sonder_beat, category = "LOFI", emoji = "🎵"),
+        AudioTrack(id = "3", name = "Classic Hip-Hop 📻", nameEn = "Classic Hip-Hop 📻", resId = R.raw.musinova_classic_hip_hop, category = "LOFI", emoji = "🎼"),
+        AudioTrack(id = "4", name = "Meka kiša 🌧️", nameEn = "Soft Rain 🌧️", resId = R.raw.calming_rain, category = "AMBIENCE", emoji = "🌧️"),
+        AudioTrack(id = "5", name = "Macin glas 🐱", nameEn = "Cute Cat 🐱", resId = R.raw.cute_cat, category = "AMBIENCE", emoji = "😸", isLooping = false),
+        AudioTrack(id = "6", name = "Mjaukanje 🐾", nameEn = "Cat Meow 🐾", resId = R.raw.cat_meow, category = "AMBIENCE", emoji = "🐈‍⬛", isLooping = false),
+        AudioTrack(id = "7", name = "Bleki lavež 🐕", nameEn = "Blacky Bark 🐕", resId = R.raw.dragon_studio_dog_bark, category = "AMBIENCE", emoji = "🐶", isLooping = false)
     )
 
     private val _isPlaying = MutableStateFlow(false)
@@ -187,7 +190,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 val dir = File(getApplication<Application>().filesDir, "custom_audio")
                 if (!dir.exists()) dir.mkdirs()
 
-                var title = "Moja pesma"
+                val isSerbia = getApplication<Application>().resources.configuration.locales[0].language.equals("sr", ignoreCase = true)
+                var title = if (isSerbia) "Moja pesma" else "My Song"
                 resolver.query(uri, null, null, null, null)?.use { cursor ->
                     val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
                     if (cursor.moveToFirst() && nameIndex != -1) {

@@ -14,17 +14,24 @@ object AudioShareHelper {
 
     suspend fun shareAudioTrack(context: Context, track: AudioTrack) {
         val uri = getShareableUri(context, track) ?: return
-        
-        val title = track.name
+
+        val isSerbia = context.resources.configuration.locales[0].language.equals("sr", ignoreCase = true)
+        val title = track.displayName(isSerbia)
+        val shareText = if (isSerbia) {
+            "Evo jedna super pesma iz mog planera: $title \uD83C\uDFB5\u2728"
+        } else {
+            "Here is an awesome song from my planner: $title \uD83C\uDFB5\u2728"
+        }
+        val chooserTitle = if (isSerbia) "Podeli pesmu" else "Share song"
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "audio/mpeg"
             putExtra(Intent.EXTRA_STREAM, uri)
             putExtra(Intent.EXTRA_TITLE, title)
-            putExtra(Intent.EXTRA_TEXT, "Evo jedna super pesma iz mog planera: $title \uD83C\uDFB5\u2728")
+            putExtra(Intent.EXTRA_TEXT, shareText)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        
-        context.startActivity(Intent.createChooser(shareIntent, "Podeli pesmu (Share audio)"))
+
+        context.startActivity(Intent.createChooser(shareIntent, chooserTitle))
     }
 
     private suspend fun getShareableUri(context: Context, track: AudioTrack): Uri? {

@@ -1,5 +1,17 @@
 package com.elena.mojmaliplaner.ui.navigation
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +25,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -63,12 +76,26 @@ fun AppNavigation(
     val customTracks by viewModel.allCustomTracks.collectAsState()
 
     if (isOnboardingCompleted == null) {
+        val infiniteTransition = rememberInfiniteTransition(label = "splash_float")
+        val floatY by infiniteTransition.animateFloat(
+            initialValue = -6f,
+            targetValue = 6f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(900, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "floatY"
+        )
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = "🐈‍⬛ ✨ 🦉", fontSize = 36.sp)
+                Text(
+                    text = "🐈‍⬛ ✨ 🦉",
+                    fontSize = 38.sp,
+                    modifier = Modifier.graphicsLayer { translationY = floatY }
+                )
                 Spacer(modifier = Modifier.height(16.dp))
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
@@ -76,13 +103,56 @@ fun AppNavigation(
     } else {
         val startDestination = if (isOnboardingCompleted == true) Routes.HOME else Routes.ONBOARDING
 
-        com.elena.mojmaliplaner.ui.components.StarAnimationOverlay(viewModel = viewModel)
-
-        NavHost(
-            navController = navController,
-            startDestination = startDestination
-        ) {
-            composable(Routes.ONBOARDING) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            NavHost(
+                navController = navController,
+                startDestination = startDestination,
+                enterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { fullWidth -> (fullWidth * 0.22f).toInt() },
+                        animationSpec = tween(320, easing = FastOutSlowInEasing)
+                    ) + fadeIn(
+                        animationSpec = tween(280, easing = FastOutSlowInEasing)
+                    ) + scaleIn(
+                        initialScale = 0.96f,
+                        animationSpec = tween(320, easing = FastOutSlowInEasing)
+                    )
+                },
+                exitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { fullWidth -> -(fullWidth * 0.14f).toInt() },
+                        animationSpec = tween(280, easing = FastOutSlowInEasing)
+                    ) + fadeOut(
+                        animationSpec = tween(220, easing = FastOutSlowInEasing)
+                    ) + scaleOut(
+                        targetScale = 0.96f,
+                        animationSpec = tween(280, easing = FastOutSlowInEasing)
+                    )
+                },
+                popEnterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { fullWidth -> -(fullWidth * 0.16f).toInt() },
+                        animationSpec = tween(300, easing = FastOutSlowInEasing)
+                    ) + fadeIn(
+                        animationSpec = tween(260, easing = FastOutSlowInEasing)
+                    ) + scaleIn(
+                        initialScale = 0.96f,
+                        animationSpec = tween(300, easing = FastOutSlowInEasing)
+                    )
+                },
+                popExitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { fullWidth -> (fullWidth * 0.24f).toInt() },
+                        animationSpec = tween(280, easing = FastOutSlowInEasing)
+                    ) + fadeOut(
+                        animationSpec = tween(220, easing = FastOutSlowInEasing)
+                    ) + scaleOut(
+                        targetScale = 0.95f,
+                        animationSpec = tween(280, easing = FastOutSlowInEasing)
+                    )
+                }
+            ) {
+                composable(Routes.ONBOARDING) {
                 OnboardingScreen(
                     onCompleteOnboarding = { name, pin ->
                         viewModel.saveOnboarding(name, pin)
@@ -296,6 +366,9 @@ fun AppNavigation(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
+        }
+
+            com.elena.mojmaliplaner.ui.components.StarAnimationOverlay(viewModel = viewModel)
         }
     }
 }

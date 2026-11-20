@@ -42,6 +42,8 @@ class AppRepository(context: Context) {
         )
     }
 
+    suspend fun insertPetLog(log: PetLogEntity): Long = petLogDao.insertLog(log)
+
     // Diary
     val allDiaryEntries: Flow<List<DiaryEntryEntity>> = diaryDao.getAllDiaryEntries()
     suspend fun insertDiaryEntry(entry: DiaryEntryEntity): Long = diaryDao.insertDiaryEntry(entry)
