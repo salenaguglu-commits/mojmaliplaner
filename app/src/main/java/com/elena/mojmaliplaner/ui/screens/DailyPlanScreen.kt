@@ -50,9 +50,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.elena.mojmaliplaner.R
 import com.elena.mojmaliplaner.data.db.TaskEntity
 import com.elena.mojmaliplaner.ui.theme.SoftGold
 
@@ -60,6 +63,9 @@ import com.elena.mojmaliplaner.ui.theme.SoftGold
 @Composable
 fun DailyPlanScreen(
     tasks: List<TaskEntity>,
+    bronzeStars: Int,
+    silverStars: Int,
+    availableStars: Int,
     onAddTask: (title: String, category: String) -> Unit,
     onToggleTask: (TaskEntity) -> Unit,
     onDeleteTask: (TaskEntity) -> Unit,
@@ -67,15 +73,20 @@ fun DailyPlanScreen(
 ) {
     var customTaskText by remember { mutableStateOf("") }
     val context = LocalContext.current
+    val isSerbia = androidx.compose.ui.platform.LocalConfiguration.current.locales[0].language.equals("sr", ignoreCase = true)
 
-    val presetTemplates = listOf("Sredi sobu 🧹", "Uradi domaći 📚", "Spakuj ranac 🎒", "Popij vodu 💧")
+    val presetTemplates = if (isSerbia) {
+        listOf("Sredi sobu 🧹", "Uradi domaći 📚", "Spakuj ranac 🎒", "Popij vodu 💧")
+    } else {
+        listOf("Clean room 🧹", "Do homework 📚", "Pack backpack 🎒", "Drink water 💧")
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Moj današnji plan 📝",
+                        text = stringResource(R.string.daily_plan_topbar),
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleLarge
                     )
@@ -119,7 +130,7 @@ fun DailyPlanScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text(
-                        text = "Brzi unos zadataka za danas ✨",
+                        text = if (isSerbia) "Brzi unos zadataka za danas ✨" else "Quick task templates ✨",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -133,7 +144,7 @@ fun DailyPlanScreen(
                             Surface(
                                 modifier = Modifier.clickable {
                                     onAddTask(template, "DNEVNI_PLAN")
-                                    Toast.makeText(context, "Dodato: $template ⭐", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "${if (isSerbia) "Dodato" else "Added"}: $template ⭐", Toast.LENGTH_SHORT).show()
                                 },
                                 shape = RoundedCornerShape(14.dp),
                                 color = MaterialTheme.colorScheme.primaryContainer,
@@ -170,7 +181,7 @@ fun DailyPlanScreen(
                 OutlinedTextField(
                     value = customTaskText,
                     onValueChange = { customTaskText = it },
-                    placeholder = { Text("Dodaj svoj plan za danas...") },
+                    placeholder = { Text(if (isSerbia) "Dodaj svoj plan za danas..." else "Add your plan for today...") },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(14.dp),
                     singleLine = true,
@@ -195,9 +206,30 @@ fun DailyPlanScreen(
                 }
             }
 
+            // Progress info
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("🥉 $bronzeStars/5", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text("🥈 $silverStars/5", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("⭐ $availableStars", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = SoftGold)
+                    }
+                }
+            }
+
             // Tasks List
             Text(
-                text = "Današnji Zadaci 🌟",
+                text = if (isSerbia) "Današnji Zadaci 🌟" else "Today's Tasks 🌟",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground

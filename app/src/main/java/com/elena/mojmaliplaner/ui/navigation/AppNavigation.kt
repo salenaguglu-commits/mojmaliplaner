@@ -41,6 +41,8 @@ object Routes {
     const val PETS = "pets"
     const val MUSIC = "music"
     const val DIARY = "diary"
+    const val ALBUM = "album"
+    const val LANGUAGE_GAME = "language_game"
 }
 
 @Composable
@@ -74,6 +76,8 @@ fun AppNavigation(
     } else {
         val startDestination = if (isOnboardingCompleted == true) Routes.HOME else Routes.ONBOARDING
 
+        com.elena.mojmaliplaner.ui.components.StarAnimationOverlay(viewModel = viewModel)
+
         NavHost(
             navController = navController,
             startDestination = startDestination
@@ -92,14 +96,17 @@ fun AppNavigation(
             composable(Routes.HOME) {
                 val context = androidx.compose.ui.platform.LocalContext.current
                 val userPin by viewModel.userPin.collectAsState()
+                val appLanguage by viewModel.appLanguage.collectAsState()
 
                 HomeScreen(
                     userName = userName,
                     catName = catName,
                     dogName = dogName,
+                    appLanguage = appLanguage,
                     todayTasks = tasks,
                     isDarkTheme = isDarkTheme,
                     onToggleTheme = { viewModel.toggleTheme() },
+                    onUpdateAppLanguage = { lang -> viewModel.updateAppLanguage(lang) },
                     onNavigateToRoute = { route ->
                         navController.navigate(route)
                     },
@@ -114,15 +121,28 @@ fun AppNavigation(
                         }
                     },
                     onExportBackup = {
+                        val bronzeStars = viewModel.bronzeStars.value
+                        val silverStars = viewModel.silverStars.value
+                        val availableStars = viewModel.availableStars.value
+                        val totalStars = viewModel.totalStars.value
+                        val unlockedStickers = viewModel.unlockedStickers.value
+                        val solvedQuestionIds = viewModel.solvedQuestionIds.value
+
                         val json = com.elena.mojmaliplaner.data.BackupManager.createBackupJson(
                             userName = userName,
                             catName = catName,
                             dogName = dogName,
                             userPin = userPin,
+                            bronzeStars = bronzeStars,
+                            silverStars = silverStars,
+                            availableStars = availableStars,
+                            totalStars = totalStars,
+                            solvedQuestionIds = solvedQuestionIds,
                             tasks = tasks,
                             petLogs = petLogs,
                             diaryEntries = diaryEntries,
-                            musicSheets = musicSheets
+                            musicSheets = musicSheets,
+                            unlockedStickers = unlockedStickers
                         )
                         com.elena.mojmaliplaner.data.BackupManager.exportAndShareBackup(context, json)
                     },
@@ -151,10 +171,19 @@ fun AppNavigation(
             }
 
             composable(Routes.DAILY_PLAN) {
+                val bronzeStars by viewModel.bronzeStars.collectAsState()
+                val silverStars by viewModel.silverStars.collectAsState()
+                val availableStars by viewModel.availableStars.collectAsState()
+                
                 DailyPlanScreen(
                     tasks = tasks.filter { it.category == "DNEVNI_PLAN" },
+                    bronzeStars = bronzeStars,
+                    silverStars = silverStars,
+                    availableStars = availableStars,
                     onAddTask = { title, category ->
-                        viewModel.addTask(title = title, category = category)
+                        // Force midnight dateMillis for today's daily plan and school tasks
+                        val todayMillis = java.time.LocalDate.now().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+                        viewModel.addTask(title = title, category = category, dateMillis = todayMillis)
                     },
                     onToggleTask = { task -> viewModel.toggleTaskCompleted(task) },
                     onDeleteTask = { task -> viewModel.deleteTask(task) },
@@ -166,7 +195,8 @@ fun AppNavigation(
                 StudyScreen(
                     tasks = tasks,
                     onAddStudyTask = { title, subjectName ->
-                        viewModel.addTask(title = title, category = "ŠKOLA", subjectName = subjectName)
+                        val todayMillis = java.time.LocalDate.now().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+                        viewModel.addTask(title = title, category = "ŠKOLA", subjectName = subjectName, dateMillis = todayMillis)
                     },
                     onToggleTask = { task -> viewModel.toggleTaskCompleted(task) },
                     onDeleteTask = { task -> viewModel.deleteTask(task) },
@@ -187,12 +217,27 @@ fun AppNavigation(
             }
 
             composable(Routes.PETS) {
+                val unlockedStickers by viewModel.unlockedStickers.collectAsState()
                 PetsScreen(
                     catName = catName,
                     dogName = dogName,
                     petLogs = petLogs,
+                    unlockedStickers = unlockedStickers,
                     onLogPetAction = { petType, actionType ->
                         viewModel.logPetAction(petType, actionType)
+                    },
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(Routes.ALBUM) {
+                val availableStars by viewModel.availableStars.collectAsState()
+                val unlockedStickers by viewModel.unlockedStickers.collectAsState()
+                com.elena.mojmaliplaner.ui.screens.StickerAlbumScreen(
+                    availableStars = availableStars,
+                    unlockedStickers = unlockedStickers,
+                    onOpenPack = { onOpened, onNotEnoughStars ->
+                        viewModel.openStickerPack(onOpened, onNotEnoughStars)
                     },
                     onNavigateBack = { navController.popBackStack() }
                 )
@@ -232,6 +277,22 @@ fun AppNavigation(
                     onDeleteDiaryEntry = { entry ->
                         viewModel.deleteDiaryEntry(entry)
                     },
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(Routes.LANGUAGE_GAME) {
+                val languageStreak by viewModel.languageStreak.collectAsState()
+                val solvedQuestionIds by viewModel.solvedQuestionIds.collectAsState()
+
+                com.elena.mojmaliplaner.ui.screens.LanguageGameScreen(
+                    languageStreak = languageStreak,
+                    solvedQuestionIds = solvedQuestionIds,
+                    onCorrectAnswer = { qId ->
+                        viewModel.submitLanguageAnswer(true)
+                        viewModel.markQuestionSolved(qId)
+                    },
+                    onWrongAnswer = { viewModel.submitLanguageAnswer(false) },
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

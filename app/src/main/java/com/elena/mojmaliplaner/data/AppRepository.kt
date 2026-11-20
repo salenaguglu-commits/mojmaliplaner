@@ -16,6 +16,7 @@ class AppRepository(context: Context) {
     private val diaryDao = db.diaryDao()
     private val musicSheetDao = db.musicSheetDao()
     private val customTrackDao = db.customTrackDao()
+    private val stickerDao = db.stickerDao()
 
     // Tasks
     val allTasks: Flow<List<TaskEntity>> = taskDao.getAllTasks()
@@ -55,6 +56,11 @@ class AppRepository(context: Context) {
     val allCustomTracks: Flow<List<CustomTrackEntity>> = customTrackDao.getAllCustomTracks()
     suspend fun insertCustomTrack(track: CustomTrackEntity): Long = customTrackDao.insertCustomTrack(track)
     suspend fun deleteCustomTrack(track: CustomTrackEntity) = customTrackDao.deleteCustomTrack(track)
+
+    // Stickers
+    val allUnlockedStickers: Flow<List<com.elena.mojmaliplaner.data.db.UnlockedStickerEntity>> = stickerDao.getAllUnlockedStickers()
+    suspend fun insertSticker(sticker: com.elena.mojmaliplaner.data.db.UnlockedStickerEntity) = stickerDao.insertSticker(sticker)
+    suspend fun updateSticker(sticker: com.elena.mojmaliplaner.data.db.UnlockedStickerEntity) = stickerDao.updateSticker(sticker)
 
     // Clear all tables for full factory reset
     suspend fun clearAllData() {

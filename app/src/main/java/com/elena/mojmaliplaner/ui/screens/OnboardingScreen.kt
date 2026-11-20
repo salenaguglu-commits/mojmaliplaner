@@ -1,6 +1,6 @@
 package com.elena.mojmaliplaner.ui.screens
 
-import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,13 +38,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elena.mojmaliplaner.R
 
 @Composable
 fun OnboardingScreen(
@@ -54,6 +56,7 @@ fun OnboardingScreen(
     var pin by remember { mutableStateOf("") }
     var confirmPin by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    val isSerbia = LocalConfiguration.current.locales[0].language.equals("sr", ignoreCase = true)
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -78,7 +81,7 @@ fun OnboardingScreen(
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 ),
-                border = androidx.compose.foundation.BorderStroke(
+                border = BorderStroke(
                     1.dp,
                     MaterialTheme.colorScheme.outline
                 )
@@ -127,7 +130,7 @@ fun OnboardingScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "Moj Mali Planer",
+                        text = stringResource(R.string.app_name),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -137,7 +140,7 @@ fun OnboardingScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Topli kutak za tvoje obaveze, ciljeve i tajni dnevnik 🐾",
+                        text = if (isSerbia) "Topli kutak za tvoje obaveze, ciljeve i tajni dnevnik 🐾" else "A cozy space for your tasks, goals, and secret diary 🐾",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
@@ -156,7 +159,7 @@ fun OnboardingScreen(
                 OutlinedTextField(
                     value = userName,
                     onValueChange = { userName = it },
-                    label = { Text("Tvoje ime") },
+                    label = { Text(stringResource(R.string.label_your_name)) },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Person,
@@ -176,8 +179,8 @@ fun OnboardingScreen(
                 OutlinedTextField(
                     value = pin,
                     onValueChange = { if (it.length <= 4 && it.all { char -> char.isDigit() }) pin = it },
-                    label = { Text("Postavi 4-cifreni PIN za Dnevnik") },
-                    placeholder = { Text("Npr. 1111") },
+                    label = { Text(if (isSerbia) "Postavi 4-cifreni PIN za Dnevnik" else "Set 4-digit PIN for Diary") },
+                    placeholder = { Text("1111") },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Lock,
@@ -199,7 +202,7 @@ fun OnboardingScreen(
                 OutlinedTextField(
                     value = confirmPin,
                     onValueChange = { if (it.length <= 4 && it.all { char -> char.isDigit() }) confirmPin = it },
-                    label = { Text("Potvrdi PIN") },
+                    label = { Text(if (isSerbia) "Potvrdi PIN" else "Confirm PIN") },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Lock,
@@ -234,11 +237,11 @@ fun OnboardingScreen(
             Button(
                 onClick = {
                     if (userName.isBlank()) {
-                        errorMessage = "Molimo unesite vaše ime."
+                        errorMessage = if (isSerbia) "Molimo unesite vaše ime." else "Please enter your name."
                     } else if (pin.length != 4) {
-                        errorMessage = "PIN mora imati tačno 4 cifre (npr. 1111)."
+                        errorMessage = if (isSerbia) "PIN mora imati tačno 4 cifre (npr. 1111)." else "PIN must be 4 digits (e.g. 1111)."
                     } else if (pin != confirmPin) {
-                        errorMessage = "Uneti PIN-ovi se ne poklapaju!"
+                        errorMessage = if (isSerbia) "Uneti PIN-ovi se ne poklapaju!" else "PINs do not match!"
                     } else {
                         errorMessage = null
                         onCompleteOnboarding(userName, pin)
@@ -254,7 +257,7 @@ fun OnboardingScreen(
                 )
             ) {
                 Text(
-                    text = "Kreni ✨",
+                    text = stringResource(R.string.btn_start_planner),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )

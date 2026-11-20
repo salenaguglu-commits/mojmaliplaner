@@ -66,37 +66,68 @@ fun FreeTimeScreen(
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
+    val isSerbia = androidx.compose.ui.platform.LocalConfiguration.current.locales[0].language.equals("sr", ignoreCase = true)
 
     LaunchedEffect(Unit) {
         if (tasks.none { it.category == "SLOBODNO_IDEJA" }) {
-            listOf(
-                "Nacrtaj novu avanturu Mije i Blekija 🎨",
-                "Napravi slagalicu ili lego kulu 🧱",
-                "Pravi figurice od plastelina 🌈",
-                "Nauči novu društvenu igru sa drugarima 🎲"
-            ).forEach {
+            val defaults = if (isSerbia) {
+                listOf(
+                    "Nacrtaj novu avanturu Mije i Blekija 🎨",
+                    "Napravi slagalicu ili lego kulu 🧱",
+                    "Pravi figurice od plastelina 🌈",
+                    "Nauči novu društvenu igru sa drugarima 🎲"
+                )
+            } else {
+                listOf(
+                    "Draw a new adventure of Mia and Blacky 🎨",
+                    "Build a puzzle or Lego tower 🧱",
+                    "Make clay figurines 🌈",
+                    "Learn a new board game with friends 🎲"
+                )
+            }
+            defaults.forEach {
                 onAddTask(it, "SLOBODNO_IDEJA", "#6EC5E9", null)
             }
         }
 
         if (tasks.none { it.category == "SLOBODNO_MEDA" }) {
-            listOf(
-                "Mali Princ" to "5",
-                "Kralj Lavova" to "5",
-                "Gospodar prstenova" to "5",
-                "Hobit" to "5"
-            ).forEach { (title, rating) ->
+            val defaults = if (isSerbia) {
+                listOf(
+                    "Mali Princ" to "5",
+                    "Kralj Lavova" to "5",
+                    "Gospodar prstenova" to "5",
+                    "Hobit" to "5"
+                )
+            } else {
+                listOf(
+                    "The Little Prince" to "5",
+                    "The Lion King" to "5",
+                    "The Lord of the Rings" to "5",
+                    "The Hobbit" to "5"
+                )
+            }
+            defaults.forEach { (title, rating) ->
                 onAddTask(title, "SLOBODNO_MEDA", "#C49ED4", rating)
             }
         }
 
         if (tasks.none { it.category == "SLOBODNO_ZELJA" }) {
-            listOf(
-                "Odlazak u prirodu sa Blekijem 🐕",
-                "Pravljenje neke sjajne poslastice 🧁",
-                "Vožnja bicikla 🚲",
-                "Komponovanje nove kompozicije 🎼"
-            ).forEach {
+            val defaults = if (isSerbia) {
+                listOf(
+                    "Odlazak u prirodu sa Blekijem 🐕",
+                    "Pravljenje neke sjajne poslastice 🧁",
+                    "Vožnja bicikla 🚲",
+                    "Komponovanje nove kompozicije 🎼"
+                )
+            } else {
+                listOf(
+                    "Trip to nature with Blacky 🐕",
+                    "Baking a delicious treat 🧁",
+                    "Riding a bicycle 🚲",
+                    "Composing a new tune 🎼"
+                )
+            }
+            defaults.forEach {
                 onAddTask(it, "SLOBODNO_ZELJA", "#CBA84E", null)
             }
         }
@@ -181,7 +212,7 @@ fun FreeTimeScreen(
                                 OutlinedTextField(
                                     value = newIdeaInput,
                                     onValueChange = { newIdeaInput = it },
-                                    placeholder = { Text("Dodaj novu ideju za igru...") },
+                                    placeholder = { Text(if (isSerbia) "Dodaj novu ideju za igru..." else "Add a new game idea...") },
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(14.dp),
                                     colors = OutlinedTextFieldDefaults.colors(
@@ -271,7 +302,7 @@ fun FreeTimeScreen(
                                 OutlinedTextField(
                                     value = newMediaTitle,
                                     onValueChange = { newMediaTitle = it },
-                                    placeholder = { Text("Naziv pročitane knjige ili filma...") },
+                                    placeholder = { Text(if (isSerbia) "Naziv pročitane knjige ili filma..." else "Title of read book or movie...") },
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(14.dp),
                                     colors = OutlinedTextFieldDefaults.colors(
@@ -376,7 +407,7 @@ fun FreeTimeScreen(
                                 OutlinedTextField(
                                     value = newWishInput,
                                     onValueChange = { newWishInput = it },
-                                    placeholder = { Text("Dodaj želju za vikend...") },
+                                    placeholder = { Text(if (isSerbia) "Dodaj želju za vikend..." else "Add a weekend wish...") },
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(14.dp),
                                     colors = OutlinedTextFieldDefaults.colors(

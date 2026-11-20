@@ -52,10 +52,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.elena.mojmaliplaner.R
 import com.elena.mojmaliplaner.data.db.TaskEntity
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -72,20 +74,32 @@ fun StudyScreen(
     var homeworkTitle by remember { mutableStateOf("") }
     val context = LocalContext.current
 
-    val timetable = mapOf(
-        "Ponedeljak" to listOf("Francuski 🇫🇷", "Srpski 🇷🇸", "Fizičko 🏃", "Geografija 🌍", "Istorija 📜", "Matematika 📐"),
-        "Utorak" to listOf("Engleski 🇬🇧", "Matematika 📐", "ČOS 👥", "Srpski 🇷🇸", "Fizika ⚡"),
-        "Sreda" to listOf("Fizičko 🏃", "Biologija 🔬", "Geografija 🌍", "Likovno 🎨", "Srpski 🇷🇸", "Matematika 📐"),
-        "Četvrtak" to listOf("Informatika 💻", "Matematika 📐", "Francuski 🇫🇷", "Engleski 🇬🇧", "Muzičko 🎵", "Fizika ⚡"),
-        "Petak" to listOf("Građansko 🕊️", "Srpski 🇷🇸", "Fizičko 🏃", "Istorija 📜", "Biologija 🔬", "Tehničko (blok) 🛠️")
-    )
+    val isSerbia = androidx.compose.ui.platform.LocalConfiguration.current.locales[0].language.equals("sr", ignoreCase = true)
+
+    val timetable = if (isSerbia) {
+        mapOf(
+            "Ponedeljak" to listOf("Francuski 🇫🇷", "Srpski 🇷🇸", "Fizičko 🏃", "Geografija 🌍", "Istorija 📜", "Matematika 📐"),
+            "Utorak" to listOf("Engleski 🇬🇧", "Matematika 📐", "ČOS 👥", "Srpski 🇷🇸", "Fizika ⚡"),
+            "Sreda" to listOf("Fizičko 🏃", "Biologija 🔬", "Geografija 🌍", "Likovno 🎨", "Srpski 🇷🇸", "Matematika 📐"),
+            "Četvrtak" to listOf("Informatika 💻", "Matematika 📐", "Francuski 🇫🇷", "Engleski 🇬🇧", "Muzičko 🎵", "Fizika ⚡"),
+            "Petak" to listOf("Građansko 🕊️", "Srpski 🇷🇸", "Fizičko 🏃", "Istorija 📜", "Biologija 🔬", "Tehničko (blok) 🛠️")
+        )
+    } else {
+        mapOf(
+            "Monday" to listOf("French 🇫🇷", "English 🇬🇧", "PE 🏃", "Geography 🌍", "History 📜", "Math 📐"),
+            "Tuesday" to listOf("English 🇬🇧", "Math 📐", "Homeroom 👥", "Science 🔬", "Physics ⚡"),
+            "Wednesday" to listOf("PE 🏃", "Biology 🔬", "Geography 🌍", "Art 🎨", "English 🇬🇧", "Math 📐"),
+            "Thursday" to listOf("Computer Science 💻", "Math 📐", "French 🇫🇷", "English 🇬🇧", "Music 🎵", "Physics ⚡"),
+            "Friday" to listOf("Civics 🕊️", "English 🇬🇧", "PE 🏃", "History 📜", "Biology 🔬", "Technology 🛠️")
+        )
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Šta treba da učim? 📚",
+                        text = stringResource(R.string.study_topbar),
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleLarge
                     )
@@ -118,12 +132,12 @@ fun StudyScreen(
                 Tab(
                     selected = selectedTabIndex == 0,
                     onClick = { selectedTabIndex = 0 },
-                    text = { Text("Raspored časova 6/2 🏫", fontWeight = FontWeight.Bold) }
+                    text = { Text(if (isSerbia) "Raspored časova 🏫" else "School Timetable 🏫", fontWeight = FontWeight.Bold) }
                 )
                 Tab(
                     selected = selectedTabIndex == 1,
                     onClick = { selectedTabIndex = 1 },
-                    text = { Text("Domaći i Kontrolni 📝", fontWeight = FontWeight.Bold) }
+                    text = { Text(if (isSerbia) "Domaći i Kontrolni 📝" else "Homework & Exams 📝", fontWeight = FontWeight.Bold) }
                 )
             }
 
@@ -145,7 +159,7 @@ fun StudyScreen(
                             )
                         ) {
                             Text(
-                                text = "💡 Klikni na bilo koji predmet iz rasporeda da dodaš domaći zadatak ili podsetnik!",
+                                text = if (isSerbia) "💡 Klikni na bilo koji predmet iz rasporeda da dodaš domaći zadatak ili podsetnik!" else "💡 Tap any subject in the schedule to add homework or a reminder!",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -238,7 +252,7 @@ fun StudyScreen(
                                 )
                             ) {
                                 Text(
-                                    text = "Trenutno nema zadataka za školu! Klikni na raspored da dodaš novi zadatak. ✨",
+                                    text = if (isSerbia) "Trenutno nema zadataka za školu! Klikni na raspored da dodaš novi zadatak. ✨" else "No school assignments right now! Tap a subject in the schedule to add one. ✨",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(20.dp)
@@ -344,7 +358,7 @@ fun StudyScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Novi zadatak za ${selectedSubjectForHomework!!}",
+                            text = if (isSerbia) "Novi zadatak za ${selectedSubjectForHomework!!}" else "New assignment for ${selectedSubjectForHomework!!}",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -357,7 +371,7 @@ fun StudyScreen(
                     OutlinedTextField(
                         value = homeworkTitle,
                         onValueChange = { homeworkTitle = it },
-                        placeholder = { Text("Npr. Uradi stranu 45, vežba 3...") },
+                        placeholder = { Text(if (isSerbia) "Npr. Uradi stranu 45, vežba 3..." else "E.g. Page 45, exercise 3...") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
                         colors = OutlinedTextFieldDefaults.colors(

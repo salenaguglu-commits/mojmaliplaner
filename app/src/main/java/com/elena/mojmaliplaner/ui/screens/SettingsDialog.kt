@@ -4,7 +4,10 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,14 +31,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -45,13 +51,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.elena.mojmaliplaner.R
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsDialog(
     currentUserName: String,
     currentCatName: String,
     currentDogName: String,
+    currentAppLanguage: String,
     onSaveSettings: (userName: String, catName: String, dogName: String, newPin: String?) -> Unit,
+    onUpdateAppLanguage: (String) -> Unit,
     onExportBackup: () -> Unit,
     onImportBackup: (Uri) -> Unit,
     onResetAllData: () -> Unit,
@@ -67,6 +76,8 @@ fun SettingsDialog(
     var showResetConfirm by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val isSerbia = LocalConfiguration.current.locales[0].language.equals("sr", ignoreCase = true)
 
     val backupPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -74,6 +85,32 @@ fun SettingsDialog(
         if (uri != null) {
             onImportBackup(uri)
             Toast.makeText(context, context.getString(R.string.msg_restore_success), Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val quizPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            coroutineScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                try {
+                    val input = context.contentResolver.openInputStream(uri)
+                    if (input != null) {
+                        val dir = java.io.File(context.filesDir, "quiz_packs")
+                        if (!dir.exists()) dir.mkdirs()
+                        val file = java.io.File(dir, "pack_${System.currentTimeMillis()}.json")
+                        java.io.FileOutputStream(file).use { out ->
+                            input.copyTo(out)
+                        }
+                        input.close()
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                            Toast.makeText(context, "Kviz paket uspešno uvezen! ✨", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
         }
     }
 
@@ -92,16 +129,15 @@ fun SettingsDialog(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
                     .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // Header
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(R.string.settings_title),
+                        text = stringResource(R.string.title_system_settings),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -111,12 +147,58 @@ fun SettingsDialog(
                     }
                 }
 
+                // Language Selector
+                Text(
+                    text = if (isSerbia) "Jezik aplikacije / App Language:" else "App Language / Jezik:",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val languages = listOf(
+                        "SYSTEM" to (if (isSerbia) "Sistemski 📱" else "System 📱"),
+                        "SR" to "Srpski 🇷🇸",
+                        "EN" to "English 🇬🇧"
+                    )
+
+                    languages.forEach { (code, label) ->
+                        val isSelected = currentAppLanguage == code
+                        Surface(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { onUpdateAppLanguage(code) },
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                            border = BorderStroke(1.dp, if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline)
+                        ) {
+                            Box(
+                                modifier = Modifier.padding(vertical = 10.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+                    }
+                }
+
                 // 1. User Name
                 OutlinedTextField(
                     value = userName,
                     onValueChange = { userName = it },
-                    label = { Text(stringResource(R.string.label_user_name)) },
-                    leadingIcon = { Icon(imageVector = Icons.Default.Person, contentDescription = "Ime") },
+                    label = { Text(stringResource(R.string.label_your_name)) },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Default.Person, contentDescription = "Ime")
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
                     singleLine = true,
@@ -180,16 +262,14 @@ fun SettingsDialog(
                     singleLine = true
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Save Button
+                // Save Settings Button
                 Button(
                     onClick = {
                         val pinToUpdate = if (newPin.isNotBlank()) {
                             if (newPin.length == 4 && newPin == confirmPin) {
                                 newPin
                             } else {
-                                Toast.makeText(context, "Novi PIN mora imati 4 cifre i poklapati se!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, if (isSerbia) "PIN mora imati 4 cifre i poklapati se!" else "PIN must be 4 digits and match!", Toast.LENGTH_SHORT).show()
                                 return@Button
                             }
                         } else null
@@ -200,7 +280,7 @@ fun SettingsDialog(
                             dogName.ifBlank { "Bleki" },
                             pinToUpdate
                         )
-                        Toast.makeText(context, "Podešavanja sačuvana! ✨", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, if (isSerbia) "Podešavanja sačuvana! ✨" else "Settings saved! ✨", Toast.LENGTH_SHORT).show()
                         onDismissRequest()
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -234,6 +314,15 @@ fun SettingsDialog(
                     }
                 }
 
+                // Import Quiz Button
+                OutlinedButton(
+                    onClick = { quizPickerLauncher.launch("*/*") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Text(if (isSerbia) "Uvezi Kviz Paket (JSON) 📥" else "Import Quiz Pack (JSON) 📥", fontWeight = FontWeight.Bold)
+                }
+
                 // About App Button
                 OutlinedButton(
                     onClick = { showAboutDialog = true },
@@ -244,15 +333,16 @@ fun SettingsDialog(
                 }
 
                 // Reset All Button
-                OutlinedButton(
+                Button(
                     onClick = { showResetConfirm = true },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    ),
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
+                    shape = RoundedCornerShape(14.dp)
                 ) {
-                    Text(stringResource(R.string.btn_reset_data), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.btn_reset_all_data), fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -262,7 +352,6 @@ fun SettingsDialog(
         AboutAppDialog(onDismiss = { showAboutDialog = false })
     }
 
-    // Confirmation Dialog for Reset All
     if (showResetConfirm) {
         Dialog(onDismissRequest = { showResetConfirm = false }) {
             Card(
@@ -278,47 +367,47 @@ fun SettingsDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        text = stringResource(R.string.reset_dialog_title),
+                        text = stringResource(R.string.btn_reset_all_data),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.error
                     )
 
                     Text(
-                        text = stringResource(R.string.reset_dialog_desc),
+                        text = if (isSerbia) "Da li ste sigurni? Svi zadaci, dnevnici i sačuvane pesme biće trajno obrisani!" else "Are you sure? All tasks, diary entries and music will be permanently deleted!",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         OutlinedButton(
                             onClick = { showResetConfirm = false },
+                            modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text(stringResource(R.string.btn_cancel))
+                            Text("Otkaži")
                         }
-
-                        Spacer(modifier = Modifier.height(8.dp))
 
                         Button(
                             onClick = {
-                                showResetConfirm = false
                                 onResetAllData()
+                                showResetConfirm = false
                                 onDismissRequest()
-                                Toast.makeText(context, "Podaci su resetovani na fabričko stanje.", Toast.LENGTH_LONG).show()
                             },
-                            shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.error
-                            )
+                            ),
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text(stringResource(R.string.btn_reset_confirm))
+                            Text("Resetuj")
                         }
                     }
                 }

@@ -21,6 +21,10 @@
     <string name="cat_pets_sub">Cat, dog &amp; more</string>
     <string name="cat_music_title">Music Corner\n </string>
     <string name="cat_music_sub">Favorite songs</string>
+    <string name="cat_album_title">Stickers\nAlbum</string>
+    <string name="cat_album_sub">Animal Collection</string>
+    <string name="cat_language_title">Language\nGame</string>
+    <string name="cat_language_sub">Learn &amp; Play</string>
     <string name="btn_diary_title">SECRET DIARY . . . . .</string>
 
     <!-- Onboarding -->
@@ -91,10 +95,7 @@
     <string name="btn_about_app">About App &amp; Privacy ℹ️</string>
     <string name="about_title">About My Little Planner 🐾</string>
     <string name="app_version">Version: %1$s</string>
-    <string name="about_disclaimer">This app is 100% FREEWARE.\nIt works completely offline, does not collect any personal data, and does not communicate with any servers. Your privacy is fully protected!</string>
-    <string name="about_support">If you and your child like the app, you can optionally support the development with a small coffee. ☕</string>
-    <string name="btn_paypal">Buy me a coffee ($2)</string>
-    <string name="ips_scan_instruction">N/A</string>
+    <string name="about_disclaimer">My Little Planner is 100% free with zero ads. If you enjoy the app and want to support our charity initiative for stray pets in Belgrade, you can find more details on our official website.</string>
 
     <!-- Pin Dialog -->
     <string name="pin_title">Enter PIN 🔒</string>
@@ -106,4 +107,8 @@
     <string name="btn_import_backup">Import Backup (Restore Data) 📂</string>
     <string name="msg_backup_created">Backup created and ready for sharing! 💾✨</string>
     <string name="msg_restore_success">Data restored successfully! 🎉</string>
+
+    <!-- System Settings -->
+    <string name="title_system_settings">System Settings ⚙️</string>
+    <string name="btn_reset_all_data">Reset All Data ⚠️</string>
 </resources>

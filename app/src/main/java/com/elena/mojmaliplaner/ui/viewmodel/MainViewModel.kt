@@ -10,10 +10,27 @@ import com.elena.mojmaliplaner.data.db.DiaryEntryEntity
 import com.elena.mojmaliplaner.data.db.MusicSheetEntity
 import com.elena.mojmaliplaner.data.db.PetLogEntity
 import com.elena.mojmaliplaner.data.db.TaskEntity
+import com.elena.mojmaliplaner.data.StarRewardResult
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+
+enum class StarType {
+    BRONZE,
+    SILVER,
+    GOLD
+}
+
+data class StarEvent(
+    val type: StarType,
+    val messageSr: String,
+    val messageEn: String
+)
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -56,6 +73,51 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = false
     )
+
+    val appLanguage: StateFlow<String> = userPreferencesRepository.appLanguageFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = "SYSTEM"
+    )
+
+    val bronzeStars: StateFlow<Int> = userPreferencesRepository.bronzeStarsFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 0
+    )
+
+    val silverStars: StateFlow<Int> = userPreferencesRepository.silverStarsFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 0
+    )
+
+    val availableStars: StateFlow<Int> = userPreferencesRepository.availableStarsFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 0
+    )
+
+    val totalStars: StateFlow<Int> = userPreferencesRepository.totalStarsFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 0
+    )
+
+    val rewardedTaskIds: StateFlow<Set<String>> = userPreferencesRepository.rewardedTaskIdsFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = emptySet()
+    )
+
+    val solvedQuestionIds: StateFlow<Set<String>> = userPreferencesRepository.solvedQuestionIdsFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptySet()
+    )
+
+    private val _starEvents = MutableSharedFlow<StarEvent>()
+    val starEvents: SharedFlow<StarEvent> = _starEvents.asSharedFlow()
 
     // Database Streams
     val allTasks: StateFlow<List<TaskEntity>> = appRepository.allTasks.stateIn(
@@ -123,6 +185,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun updateAppLanguage(lang: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.setAppLanguage(lang)
+        }
+    }
+
     fun resetAllData() {
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             appRepository.clearAllData()
@@ -168,9 +236,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private val _showGoldStarCelebration = kotlinx.coroutines.flow.MutableSharedFlow<Unit>()
+    val showGoldStarCelebration = _showGoldStarCelebration.asSharedFlow()
+
     fun toggleTaskCompleted(task: TaskEntity) {
         viewModelScope.launch {
-            appRepository.updateTask(task.copy(isCompleted = !task.isCompleted))
+            val isNowCompleted = !task.isCompleted
+            appRepository.updateTask(task.copy(isCompleted = isNowCompleted))
+
+            if (isNowCompleted && (task.category == "DNEVNI_PLAN" || task.category == "ŠKOLA")) {
+                val taskIdStr = task.id.toString()
+                val currentRewarded = userPreferencesRepository.getRewardedTaskIdsSynchronously()
+
+                if (!currentRewarded.contains(taskIdStr)) {
+                    val result = userPreferencesRepository.addSilverStar(taskIdStr)
+                    when (result) {
+                        StarRewardResult.SILVER_ADDED -> {
+                            _starEvents.emit(StarEvent(StarType.SILVER, "Zadatak završen! +1 Srebrna Zvezdica 🥈", "Task done! +1 Silver Star 🥈"))
+                        }
+                        StarRewardResult.GOLD_CONVERTED -> {
+                            _starEvents.emit(StarEvent(StarType.GOLD, "5 srebrnih = +1 Zlatna Zvezdica! ⭐🎉", "5 Silver = +1 Gold Star! ⭐🎉"))
+                        }
+                        else -> {}
+                    }
+                }
+            }
         }
     }
 
@@ -184,6 +274,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun logPetAction(petType: String, actionType: String) {
         viewModelScope.launch {
             appRepository.logPetAction(petType, actionType)
+            val result = userPreferencesRepository.addBronzeStar()
+            when (result) {
+                StarRewardResult.BRONZE_ADDED -> {
+                    _starEvents.emit(StarEvent(StarType.BRONZE, "Nega ljubimca! +1 Bronzana Zvezdica 🥉", "Pet Care! +1 Bronze Star 🥉"))
+                }
+                StarRewardResult.SILVER_CONVERTED -> {
+                    _starEvents.emit(StarEvent(StarType.SILVER, "5 bronzanih = +1 Srebrna Zvezdica! 🥈✨", "5 Bronze = +1 Silver Star! 🥈✨"))
+                }
+                StarRewardResult.GOLD_CONVERTED -> {
+                    _starEvents.emit(StarEvent(StarType.GOLD, "5 srebrnih = +1 Zlatna Zvezdica! ⭐🎉", "5 Silver = +1 Gold Star! ⭐🎉"))
+                }
+                else -> {}
+            }
         }
     }
 
@@ -284,8 +387,87 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 parsed.musicSheets.forEach { sheet ->
                     appRepository.insertMusicSheet(sheet)
                 }
+
+                parsed.unlockedStickers.forEach { sticker ->
+                    appRepository.insertSticker(sticker)
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
+            }
+        }
+    }
+
+    // Stickers
+    val unlockedStickers = appRepository.allUnlockedStickers.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
+    fun openStickerPack(onOpened: (Int) -> Unit, onNotEnoughStars: () -> Unit) {
+        viewModelScope.launch {
+            val success = userPreferencesRepository.spendStars(3)
+            if (success) {
+                val currentUnlocked = unlockedStickers.value.map { it.stickerId }
+                val availableIds = (1..20).toList()
+                val lockedIds = availableIds - currentUnlocked
+
+                // Pick a random sticker, prioritize locked ones
+                val newStickerId = if (lockedIds.isNotEmpty()) {
+                    lockedIds.random()
+                } else {
+                    availableIds.random() // If all unlocked, just give a duplicate
+                }
+
+                if (!currentUnlocked.contains(newStickerId)) {
+                    appRepository.insertSticker(
+                        com.elena.mojmaliplaner.data.db.UnlockedStickerEntity(
+                            stickerId = newStickerId,
+                            unlockedAtMillis = System.currentTimeMillis(),
+                            isNew = true
+                        )
+                    )
+                }
+                
+                onOpened(newStickerId)
+            } else {
+                onNotEnoughStars()
+            }
+        }
+    }
+
+    fun markStickerAsSeen(stickerId: Int) {
+        viewModelScope.launch {
+            val sticker = unlockedStickers.value.find { it.stickerId == stickerId }
+            if (sticker != null && sticker.isNew) {
+                appRepository.updateSticker(sticker.copy(isNew = false))
+            }
+        }
+    }
+
+    fun markQuestionSolved(questionId: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.markQuestionSolved(questionId)
+        }
+    }
+
+    // Language Game State
+    private val _languageStreak = kotlinx.coroutines.flow.MutableStateFlow(0)
+    val languageStreak: StateFlow<Int> = _languageStreak.asStateFlow()
+
+    fun submitLanguageAnswer(isCorrect: Boolean) {
+        viewModelScope.launch {
+            if (isCorrect) {
+                val newStreak = _languageStreak.value + 1
+                if (newStreak >= 5) {
+                    userPreferencesRepository.addGoldStar()
+                    _showGoldStarCelebration.emit(Unit)
+                    _languageStreak.value = 0
+                } else {
+                    _languageStreak.value = newStreak
+                }
+            } else {
+                _languageStreak.value = 0
             }
         }
     }

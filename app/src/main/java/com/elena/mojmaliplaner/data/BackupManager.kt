@@ -8,6 +8,7 @@ import com.elena.mojmaliplaner.data.db.DiaryEntryEntity
 import com.elena.mojmaliplaner.data.db.MusicSheetEntity
 import com.elena.mojmaliplaner.data.db.PetLogEntity
 import com.elena.mojmaliplaner.data.db.TaskEntity
+import com.elena.mojmaliplaner.data.db.UnlockedStickerEntity
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -22,10 +23,16 @@ object BackupManager {
         catName: String,
         dogName: String,
         userPin: String,
+        bronzeStars: Int,
+        silverStars: Int,
+        availableStars: Int,
+        totalStars: Int,
+        solvedQuestionIds: Set<String>,
         tasks: List<TaskEntity>,
         petLogs: List<PetLogEntity>,
         diaryEntries: List<DiaryEntryEntity>,
-        musicSheets: List<MusicSheetEntity>
+        musicSheets: List<MusicSheetEntity>,
+        unlockedStickers: List<UnlockedStickerEntity>
     ): String {
         val root = JSONObject()
 
@@ -34,6 +41,14 @@ object BackupManager {
             put("catName", catName)
             put("dogName", dogName)
             put("userPin", userPin)
+            put("bronzeStars", bronzeStars)
+            put("silverStars", silverStars)
+            put("availableStars", availableStars)
+            put("totalStars", totalStars)
+
+            val solvedArray = JSONArray()
+            solvedQuestionIds.forEach { solvedArray.put(it) }
+            put("solvedQuestionIds", solvedArray)
         }
         root.put("preferences", prefs)
 
@@ -95,6 +110,18 @@ object BackupManager {
         }
         root.put("musicSheets", musicArray)
 
+        // Stickers
+        val stickersArray = JSONArray()
+        unlockedStickers.forEach { s ->
+            val obj = JSONObject().apply {
+                put("stickerId", s.stickerId)
+                put("unlockedAtMillis", s.unlockedAtMillis)
+                put("isNew", s.isNew)
+            }
+            stickersArray.put(obj)
+        }
+        root.put("unlockedStickers", stickersArray)
+
         return root.toString(2)
     }
 
@@ -128,10 +155,16 @@ object BackupManager {
         val catName: String?,
         val dogName: String?,
         val userPin: String?,
+        val bronzeStars: Int,
+        val silverStars: Int,
+        val availableStars: Int,
+        val totalStars: Int,
+        val solvedQuestionIds: Set<String>,
         val tasks: List<TaskEntity>,
         val petLogs: List<PetLogEntity>,
         val diaryEntries: List<DiaryEntryEntity>,
-        val musicSheets: List<MusicSheetEntity>
+        val musicSheets: List<MusicSheetEntity>,
+        val unlockedStickers: List<UnlockedStickerEntity>
     )
 
     fun parseBackupJson(jsonString: String): ParsedBackup? {
@@ -143,6 +176,18 @@ object BackupManager {
             val catName = prefs?.optString("catName")
             val dogName = prefs?.optString("dogName")
             val userPin = prefs?.optString("userPin")
+            val bronzeStars = prefs?.optInt("bronzeStars", 0) ?: 0
+            val silverStars = prefs?.optInt("silverStars", 0) ?: 0
+            val availableStars = prefs?.optInt("availableStars", 0) ?: 0
+            val totalStars = prefs?.optInt("totalStars", 0) ?: 0
+
+            val solvedSet = mutableSetOf<String>()
+            val solvedArray = prefs?.optJSONArray("solvedQuestionIds")
+            if (solvedArray != null) {
+                for (i in 0 until solvedArray.length()) {
+                    solvedSet.add(solvedArray.getString(i))
+                }
+            }
 
             // Tasks
             val tasksList = mutableListOf<TaskEntity>()
@@ -214,15 +259,37 @@ object BackupManager {
                 }
             }
 
+            // Stickers
+            val stickersList = mutableListOf<UnlockedStickerEntity>()
+            val stickersArray = root.optJSONArray("unlockedStickers")
+            if (stickersArray != null) {
+                for (i in 0 until stickersArray.length()) {
+                    val obj = stickersArray.getJSONObject(i)
+                    stickersList.add(
+                        UnlockedStickerEntity(
+                            stickerId = obj.getInt("stickerId"),
+                            unlockedAtMillis = obj.getLong("unlockedAtMillis"),
+                            isNew = obj.optBoolean("isNew", false)
+                        )
+                    )
+                }
+            }
+
             ParsedBackup(
                 userName = userName,
                 catName = catName,
                 dogName = dogName,
                 userPin = userPin,
+                bronzeStars = bronzeStars,
+                silverStars = silverStars,
+                availableStars = availableStars,
+                totalStars = totalStars,
+                solvedQuestionIds = solvedSet,
                 tasks = tasksList,
                 petLogs = petLogsList,
                 diaryEntries = diaryList,
-                musicSheets = musicList
+                musicSheets = musicList,
+                unlockedStickers = stickersList
             )
         } catch (e: Exception) {
             e.printStackTrace()

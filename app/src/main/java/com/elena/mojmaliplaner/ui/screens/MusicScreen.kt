@@ -36,6 +36,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -63,6 +64,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,18 +72,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
+import com.elena.mojmaliplaner.R
 import com.elena.mojmaliplaner.data.db.CustomTrackEntity
 import com.elena.mojmaliplaner.data.db.MusicSheetEntity
 import com.elena.mojmaliplaner.ui.theme.BlackCharcoal
 import com.elena.mojmaliplaner.ui.theme.SoftGold
 import com.elena.mojmaliplaner.ui.viewmodel.AudioTrack
 import com.elena.mojmaliplaner.ui.viewmodel.MusicViewModel
+
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,6 +104,7 @@ fun MusicScreen(
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
+    val isSerbia = LocalConfiguration.current.locales[0].language.equals("sr", ignoreCase = true)
 
     val isPlaying by musicViewModel.isPlaying.collectAsState()
     val currentTrack by musicViewModel.currentTrack.collectAsState()
@@ -110,7 +118,7 @@ fun MusicScreen(
 
     var showAddNoteDialog by remember { mutableStateOf(false) }
     var newSheetTitle by remember { mutableStateOf("") }
-    val newSheetCategory = "Solfeđo & Note"
+    val newSheetCategory = if (isSerbia) "Solfeđo & Note" else "Music Notes"
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
@@ -118,7 +126,7 @@ fun MusicScreen(
     ) { uri ->
         if (uri != null) {
             selectedImageUri = uri
-            Toast.makeText(context, "Slika nota izabrana! ✨", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, if (isSerbia) "Slika nota izabrana! ✨" else "Sheet music photo selected! ✨", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -127,7 +135,7 @@ fun MusicScreen(
     ) { uri ->
         if (uri != null) {
             onAddCustomTrackUri(uri)
-            Toast.makeText(context, "Pesma se dodaje u vašu listu... 🎵✨", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, if (isSerbia) "Pesma se dodaje u vašu listu... 🎵✨" else "Adding song to your list... 🎵✨", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -136,7 +144,7 @@ fun MusicScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Muzika & Lofi Kutak 🎵",
+                        text = stringResource(R.string.music_topbar),
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleLarge
                     )
@@ -174,7 +182,7 @@ fun MusicScreen(
                 Tab(
                     selected = selectedTabIndex == 1,
                     onClick = { selectedTabIndex = 1 },
-                    text = { Text("Muzička škola & Note 🎼", fontWeight = FontWeight.Bold) }
+                    text = { Text(if (isSerbia) "Muzička škola & Note 🎼" else "Music School & Notes 🎼", fontWeight = FontWeight.Bold) }
                 )
             }
 
@@ -249,7 +257,7 @@ fun MusicScreen(
                                     }
 
                                     Text(
-                                        text = currentTrack?.name ?: "Izaberite muziku ili zvučni ambijent",
+                                        text = currentTrack?.name ?: (if (isSerbia) "Izaberite muziku ili zvučni ambijent" else "Select music or sound ambience"),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onSurface
@@ -303,9 +311,9 @@ fun MusicScreen(
                                             val timerText = if (sleepTimerMinutes != null && remainingSeconds > 0) {
                                                 val mins = remainingSeconds / 60
                                                 val secs = remainingSeconds % 60
-                                                "Timer: $mins min $secs sek"
+                                                "Timer: $mins min $secs sec"
                                             } else {
-                                                "Sleep Timer za spavanje ⏱️"
+                                                if (isSerbia) "Sleep Timer za spavanje ⏱️" else "Sleep Timer ⏱️"
                                             }
 
                                             Text(
@@ -346,7 +354,7 @@ fun MusicScreen(
                                                     color = MaterialTheme.colorScheme.errorContainer
                                                 ) {
                                                     Text(
-                                                        text = "Isključi",
+                                                        text = if (isSerbia) "Isključi" else "Turn Off",
                                                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                                                         style = MaterialTheme.typography.labelSmall,
                                                         fontWeight = FontWeight.Bold,
@@ -363,7 +371,7 @@ fun MusicScreen(
                         // Lofi Tracks Section
                         item {
                             Text(
-                                text = "Lofi / Chill Melodije 🎶",
+                                text = if (isSerbia) "Lofi / Chill Melodije 🎶" else "Lofi / Chill Tunes 🎶",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground
@@ -383,7 +391,7 @@ fun MusicScreen(
                         // Ambience Section
                         item {
                             Text(
-                                text = "Zvučni Ambijenti i Efekti 🌧️🐾",
+                                text = if (isSerbia) "Zvučni Ambijenti i Efekti 🌧️🐾" else "Sound Ambience & FX 🌧️🐾",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground,
@@ -411,7 +419,7 @@ fun MusicScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Moje Pesme (MP3) 🎵",
+                                    text = if (isSerbia) "Moje Pesme (MP3) 🎵" else "My Songs (MP3) 🎵",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onBackground
@@ -427,7 +435,7 @@ fun MusicScreen(
                                 ) {
                                     Icon(imageVector = Icons.Default.Add, contentDescription = "Dodaj MP3")
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("+ Dodaj pesmu", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    Text(if (isSerbia) "+ Dodaj pesmu" else "+ Add song", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                 }
                             }
                         }
@@ -442,7 +450,7 @@ fun MusicScreen(
                                     )
                                 ) {
                                     Text(
-                                        text = "Još nema dodatih MP3 pesama. Klikni '+ Dodaj pesmu' da ubaciš tvoju omiljeno muziku! ✨",
+                                        text = if (isSerbia) "Još nema dodatih MP3 pesama. Klikni '+ Dodaj pesmu' da ubaciš tvoju omiljeno muziku! ✨" else "No MP3 songs added yet. Tap '+ Add song' to import your favorite music! ✨",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.padding(16.dp)
@@ -490,7 +498,7 @@ fun MusicScreen(
                             Icon(imageVector = Icons.Default.Add, contentDescription = "Dodaj note")
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Dodaj nove note / sliku 🎼",
+                                text = if (isSerbia) "Dodaj nove note / sliku 🎼" else "Add new sheet music / photo 🎼",
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -506,7 +514,7 @@ fun MusicScreen(
                                 )
                             ) {
                                 Text(
-                                    text = "Još nema sačuvanih nota u galeriji. Klikni iznad da dodaš sliku svojih nota za solfeđo ili klavir! 🎹✨",
+                                    text = if (isSerbia) "Još nema sačuvanih nota u galeriji. Klikni iznad da dodaš sliku svojih nota za solfeđo ili klavir! 🎹✨" else "No sheet music saved in gallery yet. Tap above to add photos of your music notes! 🎹✨",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(20.dp)
@@ -620,7 +628,7 @@ fun MusicScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Dodaj nove note 🎼",
+                            text = if (isSerbia) "Dodaj nove note 🎼" else "Add new sheet music 🎼",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -633,7 +641,7 @@ fun MusicScreen(
                     OutlinedTextField(
                         value = newSheetTitle,
                         onValueChange = { newSheetTitle = it },
-                        placeholder = { Text("Naziv pesme / vežbe...") },
+                        placeholder = { Text(if (isSerbia) "Naziv pesme / vežbe..." else "Title of song / exercise...") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -651,7 +659,7 @@ fun MusicScreen(
                         shape = RoundedCornerShape(14.dp)
                     ) {
                         Text(
-                            text = if (selectedImageUri != null) "Slika nota izabrana ✓" else "🖼️ Izaberi sliku nota iz galerije",
+                            text = if (selectedImageUri != null) (if (isSerbia) "Slika nota izabrana ✓" else "Sheet music photo selected ✓") else (if (isSerbia) "🖼️ Izaberi sliku nota iz galerije" else "🖼️ Choose sheet music photo from gallery"),
                             fontWeight = FontWeight.SemiBold
                         )
                     }
@@ -664,7 +672,7 @@ fun MusicScreen(
                                     newSheetCategory,
                                     selectedImageUri?.toString() ?: ""
                                 )
-                                Toast.makeText(context, "Note sačuvane! 🎼✨", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, if (isSerbia) "Note sačuvane! 🎼✨" else "Sheet music saved! 🎼✨", Toast.LENGTH_SHORT).show()
                                 newSheetTitle = ""
                                 selectedImageUri = null
                                 showAddNoteDialog = false
@@ -676,7 +684,7 @@ fun MusicScreen(
                             containerColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
-                        Text("Sačuvaj u galeriju ✨", fontWeight = FontWeight.Bold)
+                        Text(if (isSerbia) "Sačuvaj u galeriju ✨" else "Save to gallery ✨", fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -692,6 +700,10 @@ fun TrackCard(
     onSelect: () -> Unit,
     onDelete: (() -> Unit)? = null
 ) {
+    val context = LocalContext.current
+    val isSerbia = LocalConfiguration.current.locales[0].language.equals("sr", ignoreCase = true)
+    val coroutineScope = rememberCoroutineScope()
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -736,9 +748,9 @@ fun TrackCard(
                     )
                     Text(
                         text = when (track.category) {
-                            "LOFI" -> "Chill Lofi Muzika"
-                            "AMBIENCE" -> "Zvučni Ambijent"
-                            else -> "Moja MP3 Pesma"
+                            "LOFI" -> if (isSerbia) "Chill Lofi Muzika" else "Chill Lofi Music"
+                            "AMBIENCE" -> if (isSerbia) "Zvučni Ambijent" else "Sound Ambience"
+                            else -> if (isSerbia) "Moja MP3 Pesma" else "My MP3 Song"
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -747,17 +759,31 @@ fun TrackCard(
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = {
+                    coroutineScope.launch {
+                        AudioShareHelper.shareAudioTrack(context, track)
+                    }
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Share",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(4.dp))
+
                 Text(
                     text = if (isPlaying) "⏸️" else "▶️",
                     fontSize = 22.sp
                 )
 
                 if (onDelete != null) {
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
                     IconButton(onClick = onDelete) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Obriši pesmu",
+                            contentDescription = "Obriši",
                             tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
                         )
                     }

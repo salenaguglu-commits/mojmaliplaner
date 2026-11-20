@@ -91,9 +91,11 @@ fun HomeScreen(
     userName: String,
     catName: String,
     dogName: String,
+    appLanguage: String,
     todayTasks: List<TaskEntity>,
     isDarkTheme: Boolean,
     onToggleTheme: () -> Unit,
+    onUpdateAppLanguage: (String) -> Unit,
     onNavigateToRoute: (route: String) -> Unit,
     onCheckPin: (String) -> Boolean,
     onSaveSettings: (userName: String, catName: String, dogName: String, newPin: String?) -> Unit,
@@ -173,6 +175,26 @@ fun HomeScreen(
             borderColor = PastelBlue,
             emoji = "🎵",
             watermarkMotive = "🐈‍⬛🎧🎶"
+        ),
+        PlannerCategory(
+            route = Routes.ALBUM,
+            title = stringResource(R.string.cat_album_title),
+            subtitle = stringResource(R.string.cat_album_sub),
+            icon = Icons.Default.Star,
+            lightBgColor = SoftGold,
+            borderColor = SoftGold,
+            emoji = "🌟",
+            watermarkMotive = "✨🐾⭐"
+        ),
+        PlannerCategory(
+            route = Routes.LANGUAGE_GAME,
+            title = stringResource(R.string.cat_language_title),
+            subtitle = stringResource(R.string.cat_language_sub),
+            icon = Icons.Default.Edit,
+            lightBgColor = PastelPurple,
+            borderColor = PastelPurple,
+            emoji = "🌍",
+            watermarkMotive = "💬📝"
         )
     )
 
@@ -315,27 +337,36 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    for (rowIndex in 0..2) {
+                    val numRows = (categories.size + 1) / 2
+                    for (rowIndex in 0 until numRows) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
-                            val leftCategory = categories[rowIndex * 2]
-                            val rightCategory = categories[rowIndex * 2 + 1]
+                            val leftCategory = categories.getOrNull(rowIndex * 2)
+                            val rightCategory = categories.getOrNull(rowIndex * 2 + 1)
 
-                            PlannerGridCard(
-                                category = leftCategory,
-                                isDarkTheme = isDarkTheme,
-                                modifier = Modifier.weight(1f),
-                                onClick = { onNavigateToRoute(leftCategory.route) }
-                            )
+                            if (leftCategory != null) {
+                                PlannerGridCard(
+                                    category = leftCategory,
+                                    isDarkTheme = isDarkTheme,
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { onNavigateToRoute(leftCategory.route) }
+                                )
+                            } else {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
 
-                            PlannerGridCard(
-                                category = rightCategory,
-                                isDarkTheme = isDarkTheme,
-                                modifier = Modifier.weight(1f),
-                                onClick = { onNavigateToRoute(rightCategory.route) }
-                            )
+                            if (rightCategory != null) {
+                                PlannerGridCard(
+                                    category = rightCategory,
+                                    isDarkTheme = isDarkTheme,
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { onNavigateToRoute(rightCategory.route) }
+                                )
+                            } else {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
                         }
                     }
                 }
@@ -444,9 +475,11 @@ fun HomeScreen(
             currentUserName = userName,
             currentCatName = catName,
             currentDogName = dogName,
+            currentAppLanguage = appLanguage,
             onSaveSettings = { newUserName, newCatName, newDogName, newPin ->
                 onSaveSettings(newUserName, newCatName, newDogName, newPin)
             },
+            onUpdateAppLanguage = onUpdateAppLanguage,
             onExportBackup = onExportBackup,
             onImportBackup = onImportBackup,
             onResetAllData = onResetAllData,

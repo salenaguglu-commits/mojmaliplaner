@@ -21,6 +21,10 @@
     <string name="cat_pets_sub">Maca, pas i dr.</string>
     <string name="cat_music_title">Muzika\n </string>
     <string name="cat_music_sub">Omiljene pesme</string>
+    <string name="cat_album_title">Sličice\nAlbum</string>
+    <string name="cat_album_sub">Kolekcija životinja</string>
+    <string name="cat_language_title">Jezička\nIgra</string>
+    <string name="cat_language_sub">Uči i Igraj se</string>
     <string name="btn_diary_title">DNEVNIK . . . . .</string>
 
     <!-- Onboarding -->
@@ -91,10 +95,7 @@
     <string name="btn_about_app">O aplikaciji i Privatnost ℹ️</string>
     <string name="about_title">O aplikaciji Moj Mali Planer 🐾</string>
     <string name="app_version">Verzija: %1$s</string>
-    <string name="about_disclaimer">Ova aplikacija je 100% BESPLATNA.\nRadi potpuno offline, ne prikuplja nikakve podatke o vama i ne komunicira sa serverima. Vaša privatnost je apsolutno zaštićena!</string>
-    <string name="about_support">Ukoliko se vama i vašem detetu dopada aplikacija, možete simbolično podržati dalji razvoj uz kaficu. ☕</string>
-    <string name="btn_paypal">N/A (Srbija koristi IPS)</string>
-    <string name="ips_scan_instruction">Skeniraj IPS QR kod iz banke</string>
+    <string name="about_disclaimer">Moj Mali Planer je 100% besplatna aplikacija bez reklama. Ako ti se aplikacija dopada i želiš da podržiš humanitarnu akciju za nezbrinute ljubimce Beograda, više informacija možeš pronaći na našem zvaničnom sajtu.</string>
 
     <!-- Pin Dialog -->
     <string name="pin_title">Unesite PIN 🔒</string>
@@ -106,4 +107,8 @@
     <string name="btn_import_backup">Vrati podatke iz kopije (Restore) 📂</string>
     <string name="msg_backup_created">Rezervna kopija kreirana i spremna za slanje! 💾✨</string>
     <string name="msg_restore_success">Podaci su uspešno vraćeni! 🎉</string>
+
+    <!-- System Settings -->
+    <string name="title_system_settings">Sistemska Podešavanja ⚙️</string>
+    <string name="btn_reset_all_data">Resetuj sve podatke ⚠️</string>
 </resources>

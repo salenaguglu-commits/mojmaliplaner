@@ -44,9 +44,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elena.mojmaliplaner.R
 import com.elena.mojmaliplaner.data.db.DiaryEntryEntity
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -64,6 +68,7 @@ fun DiaryScreen(
     var newTitle by remember { mutableStateOf("") }
     var newContent by remember { mutableStateOf("") }
     var selectedMood by remember { mutableStateOf("🐱") }
+    val isSerbia = LocalConfiguration.current.locales[0].language.equals("sr", ignoreCase = true)
 
     val moodEmojis = listOf("🐱", "😺", "😸", "🐾", "✨")
 
@@ -73,7 +78,7 @@ fun DiaryScreen(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "Tajni Dnevnik 📖",
+                            text = stringResource(R.string.diary_topbar),
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleLarge
                         )
@@ -140,13 +145,13 @@ fun DiaryScreen(
 
                         Column {
                             Text(
-                                text = "Kutak za privatnost, $userName ✨",
+                                text = if (isSerbia) "Kutak za privatnost, $userName ✨" else "Privacy space, $userName ✨",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = "Sve što ovde zapišeš sačuvano je u lokalnoj bazi.",
+                                text = if (isSerbia) "Sve što ovde zapišeš sačuvano je u lokalnoj bazi." else "Everything you write here is stored in your local database.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                             )
@@ -172,7 +177,7 @@ fun DiaryScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "Novi zapis u dnevniku ✍️",
+                            text = if (isSerbia) "Novi zapis u dnevniku ✍️" else "New diary entry ✍️",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -184,7 +189,7 @@ fun DiaryScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = "Raspoloženje:",
+                                text = if (isSerbia) "Raspoloženje:" else "Mood:",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -208,7 +213,7 @@ fun DiaryScreen(
                         OutlinedTextField(
                             value = newTitle,
                             onValueChange = { newTitle = it },
-                            placeholder = { Text("Naslov zapisa...") },
+                            placeholder = { Text(if (isSerbia) "Naslov zapisa..." else "Entry title...") },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(14.dp),
                             singleLine = true,
@@ -220,7 +225,7 @@ fun DiaryScreen(
                         OutlinedTextField(
                             value = newContent,
                             onValueChange = { newContent = it },
-                            placeholder = { Text("Napiši svoje misli, utiske ili tajne...") },
+                            placeholder = { Text(if (isSerbia) "Napiši svoje misli, utiske ili tajne..." else "Write your secret thoughts or impressions...") },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(120.dp),
@@ -234,7 +239,7 @@ fun DiaryScreen(
                             onClick = {
                                 if (newTitle.isNotBlank() || newContent.isNotBlank()) {
                                     onAddDiaryEntry(
-                                        newTitle.ifBlank { "Zapis bez naslova" },
+                                        newTitle.ifBlank { if (isSerbia) "Zapis bez naslova" else "Untitled Entry" },
                                         newContent,
                                         selectedMood
                                     )
@@ -254,7 +259,7 @@ fun DiaryScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(text = "Sačuvaj")
+                            Text(text = if (isSerbia) "Sačuvaj" else "Save")
                         }
                     }
                 }
@@ -263,7 +268,7 @@ fun DiaryScreen(
             // Entries List
             item {
                 Text(
-                    text = "Moji Zapisi 📖",
+                    text = if (isSerbia) "Moji Zapisi 📖" else "My Entries 📖",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground,
@@ -272,7 +277,7 @@ fun DiaryScreen(
             }
 
             items(diaryEntries, key = { it.id }) { entry ->
-                val dateStr = SimpleDateFormat("dd. MMMM yyyy. HH:mm", Locale("sr")).format(Date(entry.dateMillis))
+                val dateStr = SimpleDateFormat("dd. MMMM yyyy. HH:mm", if (isSerbia) Locale("sr") else Locale.ENGLISH).format(Date(entry.dateMillis))
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),

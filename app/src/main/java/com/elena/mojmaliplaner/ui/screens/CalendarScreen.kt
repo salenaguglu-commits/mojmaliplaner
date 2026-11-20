@@ -162,6 +162,7 @@ fun MonthlyCalendarView(
     onToggleTask: (TaskEntity) -> Unit,
     onDeleteTask: (TaskEntity) -> Unit
 ) {
+    val isSerbia = androidx.compose.ui.platform.LocalConfiguration.current.locales[0].language.equals("sr", ignoreCase = true)
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
     
@@ -358,13 +359,14 @@ fun MonthlyCalendarView(
                 }
 
                 // Color Picker
+                val isSerbia = androidx.compose.ui.platform.LocalConfiguration.current.locales[0].language.equals("sr", ignoreCase = true)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Boja oznake:",
+                        text = if (isSerbia) "Boja oznake:" else "Tag color:",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -395,7 +397,7 @@ fun MonthlyCalendarView(
         val selectedDayTasks = tasks.filter { it.dateMillis.toLocalDate() == selectedDate }
         
         Text(
-            text = "Obaveze za " + selectedDate.format(DateTimeFormatter.ofPattern("dd.MM.")) + " 📋",
+            text = (if (isSerbia) "Obaveze za " else "Tasks for ") + selectedDate.format(DateTimeFormatter.ofPattern("dd.MM.")) + " 📋",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground

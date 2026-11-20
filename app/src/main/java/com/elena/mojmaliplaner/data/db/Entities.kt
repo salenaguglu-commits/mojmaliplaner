@@ -48,3 +48,10 @@ data class CustomTrackEntity(
     val filePath: String,
     val category: String = "MOJA_MUZIKA"
 )
+
+@Entity(tableName = "unlocked_stickers")
+data class UnlockedStickerEntity(
+    @PrimaryKey val stickerId: Int,
+    val unlockedAtMillis: Long,
+    val isNew: Boolean = true
+)

@@ -73,3 +73,15 @@ interface CustomTrackDao {
     @Delete
     suspend fun deleteCustomTrack(track: CustomTrackEntity)
 }
+
+@Dao
+interface StickerDao {
+    @Query("SELECT * FROM unlocked_stickers ORDER BY unlockedAtMillis DESC")
+    fun getAllUnlockedStickers(): Flow<List<UnlockedStickerEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSticker(sticker: UnlockedStickerEntity)
+
+    @Update
+    suspend fun updateSticker(sticker: UnlockedStickerEntity)
+}
